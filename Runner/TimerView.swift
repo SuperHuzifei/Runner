@@ -1,0 +1,323 @@
+//
+//  TimerView.swift
+//  Runner
+//
+//  Created by 胡云飞 on 2025/6/2.
+//
+
+import SwiftUI
+import AVFoundation
+
+class TimerViewModel: ObservableObject {
+    @Published var totalMinutes: Int = 4
+    @Published var totalSeconds: Int = 25
+    @Published var lapDistance: Int = 200
+    @Published var lapTime: Int = 53
+    
+    @Published var isRunning: Bool = false
+    @Published var remainingTime: Int = 0
+    @Published var currentLapSeconds: Int = 0
+    @Published var currentLap: Int = 1
+    
+    private var timer: Timer?
+    private let speechSynthesizer = AVSpeechSynthesizer()
+    
+    func calculateLapTime() {
+        let totalTimeInSeconds = totalMinutes * 60 + totalSeconds
+        let numberOfLaps = Double(totalTimeInSeconds) / Double(lapTime)
+        lapTime = Int(Double(totalTimeInSeconds) / round(numberOfLaps))
+    }
+    
+    func startTimer() {
+        if !isRunning {
+            isRunning = true
+            remainingTime = totalMinutes * 60 + totalSeconds
+            currentLapSeconds = 1
+            
+            timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+                guard let self = self else { return }
+                
+                if self.remainingTime > 0 {
+                    self.remainingTime -= 1
+                    
+                    // 播报当前秒数
+                    self.speakCurrentSecond()
+                    
+                    // 更新当前圈内秒数
+                    self.currentLapSeconds += 1
+                    if self.currentLapSeconds > self.lapTime {
+                        self.currentLapSeconds = 1
+                        self.currentLap += 1
+                    }
+                } else {
+                    self.pauseTimer()
+                    // 播报完成提示
+                    self.speakMessage("计时完成")
+                }
+            }
+        }
+    }
+    
+    func pauseTimer() {
+        isRunning = false
+        timer?.invalidate()
+        timer = nil
+    }
+    
+    func resetTimer() {
+        pauseTimer()
+        remainingTime = totalMinutes * 60 + totalSeconds
+        currentLapSeconds = 1
+        currentLap = 1
+    }
+    
+    func speakCurrentSecond() {
+        let utterance = AVSpeechUtterance(string: "\(currentLapSeconds)")
+        utterance.voice = AVSpeechSynthesisVoice(language: "zh-CN")
+        utterance.rate = 0.5
+        speechSynthesizer.speak(utterance)
+    }
+    
+    func speakMessage(_ message: String) {
+        let utterance = AVSpeechUtterance(string: message)
+        utterance.voice = AVSpeechSynthesisVoice(language: "zh-CN")
+        utterance.rate = 0.5
+        speechSynthesizer.speak(utterance)
+    }
+}
+
+struct TimerView: View {
+    @StateObject private var viewModel = TimerViewModel()
+    @State private var showingSettings = false
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 30) {
+                // 设置区域
+                VStack(spacing: 20) {
+                    HStack {
+                        Text("总时间:")
+                            .font(.headline)
+                        
+                        Spacer()
+                        
+                        HStack {
+                            Picker("分钟", selection: $viewModel.totalMinutes) {
+                                ForEach(0..<60) { minute in
+                                    Text("\(minute)").tag(minute)
+                                }
+                            }
+                            .pickerStyle(WheelPickerStyle())
+                            .frame(width: 60)
+                            .clipped()
+                            
+                            Text("分")
+                            
+                            Picker("秒钟", selection: $viewModel.totalSeconds) {
+                                ForEach(0..<60) { second in
+                                    Text("\(second)").tag(second)
+                                }
+                            }
+                            .pickerStyle(WheelPickerStyle())
+                            .frame(width: 60)
+                            .clipped()
+                            
+                            Text("秒")
+                        }
+                    }
+                    
+                    HStack {
+                        Text("每圈距离:")
+                            .font(.headline)
+                        
+                        Spacer()
+                        
+                        HStack {
+                            TextField("距离", value: $viewModel.lapDistance, formatter: NumberFormatter())
+                                .keyboardType(.numberPad)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .frame(width: 80)
+                            
+                            Text("米")
+                        }
+                    }
+                    
+                    Button(action: {
+                        viewModel.calculateLapTime()
+                    }) {
+                        Text("计算每圈时间")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.blue)
+                            .cornerRadius(10)
+                    }
+                    
+                    HStack {
+                        Text("每圈时间:")
+                            .font(.headline)
+                        
+                        Spacer()
+                        
+                        Text("\(viewModel.lapTime) 秒")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                    }
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemBackground))
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                )
+                
+                // 倒计时显示
+                VStack(spacing: 10) {
+                    Text("剩余时间")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    
+                    HStack(spacing: 10) {
+                        TimeDigitView(value: viewModel.remainingTime / 60)
+                        Text(":")
+                            .font(.system(size: 40, weight: .bold))
+                        TimeDigitView(value: viewModel.remainingTime % 60)
+                    }
+                    
+                    HStack {
+                        Text("当前圈数: \(viewModel.currentLap)")
+                            .font(.headline)
+                        
+                        Spacer()
+                        
+                        Text("当前秒数: \(viewModel.currentLapSeconds)")
+                            .font(.headline)
+                    }
+                    .padding(.top)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemBackground))
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                )
+                
+                // 控制按钮
+                HStack(spacing: 20) {
+                    Button(action: {
+                        if viewModel.isRunning {
+                            viewModel.pauseTimer()
+                        } else {
+                            viewModel.startTimer()
+                        }
+                    }) {
+                        Image(systemName: viewModel.isRunning ? "pause.fill" : "play.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(.white)
+                            .frame(width: 60, height: 60)
+                            .background(viewModel.isRunning ? Color.orange : Color.green)
+                            .clipShape(Circle())
+                    }
+                    
+                    Button(action: {
+                        viewModel.resetTimer()
+                    }) {
+                        Image(systemName: "arrow.counterclockwise")
+                            .font(.system(size: 24))
+                            .foregroundColor(.white)
+                            .frame(width: 60, height: 60)
+                            .background(Color.red)
+                            .clipShape(Circle())
+                    }
+                }
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("计时")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showingSettings = true
+                    }) {
+                        Image(systemName: "speaker.wave.2")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingSettings) {
+                VoiceSettingsView()
+            }
+        }
+    }
+}
+
+struct TimeDigitView: View {
+    let value: Int
+    
+    var body: some View {
+        Text(String(format: "%02d", value))
+            .font(.system(size: 60, weight: .bold, design: .rounded))
+            .frame(width: 100)
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.systemGray6))
+            )
+    }
+}
+
+struct VoiceSettingsView: View {
+    @State private var selectedVoiceGender = 0
+    @State private var selectedLanguage = 0
+    @State private var speechRate: Double = 0.5
+    
+    let voiceGenders = ["男声", "女声"]
+    let languages = ["中文 (普通话)", "英语 (美国)", "英语 (英国)"]
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("语音设置")) {
+                    Picker("声音性别", selection: $selectedVoiceGender) {
+                        ForEach(0..<voiceGenders.count) { index in
+                            Text(voiceGenders[index]).tag(index)
+                        }
+                    }
+                    
+                    Picker("语言", selection: $selectedLanguage) {
+                        ForEach(0..<languages.count) { index in
+                            Text(languages[index]).tag(index)
+                        }
+                    }
+                    
+                    VStack(alignment: .leading) {
+                        Text("语速: \(Int(speechRate * 100))%")
+                        Slider(value: $speechRate, in: 0.1...1.0, step: 0.1)
+                    }
+                }
+                
+                Section {
+                    Button(action: {
+                        // 测试语音
+                        let utterance = AVSpeechUtterance(string: "这是一个测试")
+                        utterance.voice = AVSpeechSynthesisVoice(language: "zh-CN")
+                        utterance.rate = Float(speechRate)
+                        let synthesizer = AVSpeechSynthesizer()
+                        synthesizer.speak(utterance)
+                    }) {
+                        Text("测试语音")
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+            }
+            .navigationTitle("语音设置")
+        }
+    }
+}
+
+struct TimerView_Previews: PreviewProvider {
+    static var previews: some View {
+        TimerView()
+    }
+} 
