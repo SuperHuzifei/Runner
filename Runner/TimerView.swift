@@ -24,16 +24,113 @@ class TimerViewModel: ObservableObject {
     private let audioSession = AVAudioSession.sharedInstance()
     private let settingsManager = SettingsManager.shared
     
+    // 后台任务标识符
+    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
+    
     init() {
         setupAudioSession()
+        registerForNotifications()
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+        endBackgroundTask()
     }
     
     private func setupAudioSession() {
         do {
-            try audioSession.setCategory(.playback, mode: .default)
+            try audioSession.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers, .mixWithOthers])
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         } catch {
             print("设置音频会话失败: \(error.localizedDescription)")
+        }
+    }
+    
+    private func registerForNotifications() {
+        // 监听应用进入后台的通知
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidEnterBackground),
+            name: UIApplication.didEnterBackgroundNotification,
+            object: nil
+        )
+        
+        // 监听应用进入前台的通知
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appWillEnterForeground),
+            name: UIApplication.willEnterForegroundNotification,
+            object: nil
+        )
+        
+        // 监听音频会话中断的通知
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAudioSessionInterruption),
+            name: AVAudioSession.interruptionNotification,
+            object: nil
+        )
+    }
+    
+    @objc private func appDidEnterBackground() {
+        beginBackgroundTask()
+        
+        // 确保音频会话在后台仍然活跃
+        do {
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        } catch {
+            print("在后台激活音频会话失败: \(error.localizedDescription)")
+        }
+    }
+    
+    @objc private func appWillEnterForeground() {
+        endBackgroundTask()
+    }
+    
+    @objc private func handleAudioSessionInterruption(notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+            return
+        }
+        
+        if type == .began {
+            // 中断开始，可能需要暂停计时器
+            if isRunning {
+                pauseTimer()
+            }
+        } else if type == .ended {
+            // 中断结束，检查是否应该恢复
+            if let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt {
+                let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+                if options.contains(.shouldResume) {
+                    // 尝试重新激活音频会话
+                    do {
+                        try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+                        // 如果之前是运行状态，可以选择恢复
+                        // startTimer()
+                    } catch {
+                        print("中断后重新激活音频会话失败: \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
+    }
+    
+    private func beginBackgroundTask() {
+        // 结束之前的后台任务（如果有）
+        endBackgroundTask()
+        
+        // 开始一个新的后台任务
+        backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in
+            self?.endBackgroundTask()
+        }
+    }
+    
+    private func endBackgroundTask() {
+        if backgroundTask != .invalid {
+            UIApplication.shared.endBackgroundTask(backgroundTask)
+            backgroundTask = .invalid
         }
     }
     
@@ -48,6 +145,14 @@ class TimerViewModel: ObservableObject {
             isRunning = true
             remainingTime = totalMinutes * 60 + totalSeconds
             currentLapSeconds = 1
+            
+            // 确保音频会话处于活动状态
+            setupAudioSession()
+            
+            // 如果应用在后台，开始后台任务
+            if UIApplication.shared.applicationState == .background {
+                beginBackgroundTask()
+            }
             
             timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
                 guard let self = self else { return }
@@ -70,6 +175,9 @@ class TimerViewModel: ObservableObject {
                     self.speakMessage("计时完成")
                 }
             }
+            
+            // 确保计时器在后台运行
+            RunLoop.current.add(timer!, forMode: .common)
         }
     }
     
@@ -77,6 +185,9 @@ class TimerViewModel: ObservableObject {
         isRunning = false
         timer?.invalidate()
         timer = nil
+        
+        // 如果是在后台暂停的，结束后台任务
+        endBackgroundTask()
     }
     
     func resetTimer() {
@@ -145,149 +256,150 @@ struct TimerView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 30) {
-                // 设置区域
+            ScrollView {
                 VStack(spacing: 20) {
-                    HStack {
-                        Text("总时间:")
-                            .font(.headline)
-                        
-                        Spacer()
+                    // 设置区域
+                    VStack(spacing: 20) {
+                        HStack {
+                            Text("总时间:")
+                                .font(.headline)
+                            
+                            Spacer()
+                            
+                            HStack {
+                                Picker("分钟", selection: $viewModel.totalMinutes) {
+                                    ForEach(0..<60) { minute in
+                                        Text("\(minute)").tag(minute)
+                                    }
+                                }
+                                .pickerStyle(WheelPickerStyle())
+                                .frame(width: 60)
+                                .clipped()
+                                
+                                Text("分")
+                                
+                                Picker("秒钟", selection: $viewModel.totalSeconds) {
+                                    ForEach(0..<60) { second in
+                                        Text("\(second)").tag(second)
+                                    }
+                                }
+                                .pickerStyle(WheelPickerStyle())
+                                .frame(width: 60)
+                                .clipped()
+                                
+                                Text("秒")
+                            }
+                        }
                         
                         HStack {
-                            Picker("分钟", selection: $viewModel.totalMinutes) {
-                                ForEach(0..<60) { minute in
-                                    Text("\(minute)").tag(minute)
-                                }
+                            Text("每圈距离:")
+                                .font(.headline)
+                            
+                            Spacer()
+                            
+                            HStack {
+                                TextField("距离", value: $viewModel.lapDistance, formatter: NumberFormatter())
+                                    .keyboardType(.numberPad)
+                                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                                    .frame(width: 80)
+                                
+                                Text("米")
                             }
-                            .pickerStyle(WheelPickerStyle())
-                            .frame(width: 60)
-                            .clipped()
-                            
-                            Text("分")
-                            
-                            Picker("秒钟", selection: $viewModel.totalSeconds) {
-                                ForEach(0..<60) { second in
-                                    Text("\(second)").tag(second)
-                                }
-                            }
-                            .pickerStyle(WheelPickerStyle())
-                            .frame(width: 60)
-                            .clipped()
-                            
-                            Text("秒")
                         }
-                    }
-                    
-                    HStack {
-                        Text("每圈距离:")
-                            .font(.headline)
                         
-                        Spacer()
+                        Button(action: {
+                            viewModel.calculateLapTime()
+                        }) {
+                            Text("计算每圈时间")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color.blue)
+                                .cornerRadius(10)
+                        }
                         
                         HStack {
-                            TextField("距离", value: $viewModel.lapDistance, formatter: NumberFormatter())
-                                .keyboardType(.numberPad)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .frame(width: 80)
+                            Text("每圈时间:")
+                                .font(.headline)
                             
-                            Text("米")
+                            Spacer()
+                            
+                            Text("\(viewModel.lapTime) 秒")
+                                .font(.title2)
+                                .fontWeight(.bold)
                         }
                     }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemBackground))
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    )
                     
-                    Button(action: {
-                        viewModel.calculateLapTime()
-                    }) {
-                        Text("计算每圈时间")
+                    // 倒计时显示
+                    VStack(spacing: 10) {
+                        Text("剩余时间")
                             .font(.headline)
-                            .foregroundColor(.white)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color.blue)
-                            .cornerRadius(10)
-                    }
-                    
-                    HStack {
-                        Text("每圈时间:")
-                            .font(.headline)
+                            .foregroundColor(.secondary)
                         
-                        Spacer()
-                        
-                        Text("\(viewModel.lapTime) 秒")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                    }
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemBackground))
-                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                )
-                
-                // 倒计时显示
-                VStack(spacing: 10) {
-                    Text("剩余时间")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                    
-                    HStack(spacing: 10) {
-                        TimeDigitView(value: viewModel.remainingTime / 60)
-                        Text(":")
-                            .font(.system(size: 40, weight: .bold))
-                        TimeDigitView(value: viewModel.remainingTime % 60)
-                    }
-                    
-                    HStack {
-                        Text("当前圈数: \(viewModel.currentLap)")
-                            .font(.headline)
-                        
-                        Spacer()
-                        
-                        Text("当前秒数: \(viewModel.currentLapSeconds)")
-                            .font(.headline)
-                    }
-                    .padding(.top)
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemBackground))
-                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                )
-                
-                // 控制按钮
-                HStack(spacing: 20) {
-                    Button(action: {
-                        if viewModel.isRunning {
-                            viewModel.pauseTimer()
-                        } else {
-                            viewModel.startTimer()
+                        HStack(spacing: 10) {
+                            TimeDigitView(value: viewModel.remainingTime / 60)
+                            Text(":")
+                                .font(.system(size: 40, weight: .bold))
+                            TimeDigitView(value: viewModel.remainingTime % 60)
                         }
-                    }) {
-                        Image(systemName: viewModel.isRunning ? "pause.fill" : "play.fill")
-                            .font(.system(size: 24))
-                            .foregroundColor(.white)
-                            .frame(width: 60, height: 60)
-                            .background(viewModel.isRunning ? Color.orange : Color.green)
-                            .clipShape(Circle())
+                        
+                        HStack {
+                            Text("当前圈数: \(viewModel.currentLap)")
+                                .font(.headline)
+                            
+                            Spacer()
+                            
+                            Text("当前秒数: \(viewModel.currentLapSeconds)")
+                                .font(.headline)
+                        }
+                        .padding(.top)
                     }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemBackground))
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    )
                     
-                    Button(action: {
-                        viewModel.resetTimer()
-                    }) {
-                        Image(systemName: "arrow.counterclockwise")
-                            .font(.system(size: 24))
-                            .foregroundColor(.white)
-                            .frame(width: 60, height: 60)
-                            .background(Color.red)
-                            .clipShape(Circle())
+                    // 控制按钮
+                    HStack(spacing: 20) {
+                        Button(action: {
+                            if viewModel.isRunning {
+                                viewModel.pauseTimer()
+                            } else {
+                                viewModel.startTimer()
+                            }
+                        }) {
+                            Image(systemName: viewModel.isRunning ? "pause.fill" : "play.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                                .frame(width: 60, height: 60)
+                                .background(viewModel.isRunning ? Color.orange : Color.green)
+                                .clipShape(Circle())
+                        }
+                        
+                        Button(action: {
+                            viewModel.resetTimer()
+                        }) {
+                            Image(systemName: "arrow.counterclockwise")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                                .frame(width: 60, height: 60)
+                                .background(Color.red)
+                                .clipShape(Circle())
+                        }
                     }
+                    .padding(.bottom, 20)
                 }
-                
-                Spacer()
+                .padding()
             }
-            .padding()
             .navigationTitle("计时")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {

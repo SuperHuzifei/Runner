@@ -64,7 +64,7 @@ class SettingsViewModel: ObservableObject {
     
     private func setupAudioSession() {
         do {
-            try audioSession.setCategory(.playback, mode: .default, options: [.duckOthers, .mixWithOthers])
+            try audioSession.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers, .mixWithOthers])
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         } catch {
             print("设置音频会话失败: \(error.localizedDescription)")
@@ -84,9 +84,7 @@ class SettingsViewModel: ObservableObject {
         
         // 确保音频会话处于活动状态
         do {
-            if !audioSession.isOtherAudioPlaying {
-                try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-            }
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         } catch {
             print("激活音频会话失败: \(error.localizedDescription)")
         }
@@ -133,14 +131,16 @@ struct SettingsView: View {
     
     var body: some View {
         NavigationView {
-            VStack {
+            VStack(spacing: 0) {
                 Picker("", selection: $selectedTab) {
                     Text("语音设置").tag(0)
                     Text("历史记录").tag(1)
                     Text("关于").tag(2)
                 }
                 .pickerStyle(SegmentedPickerStyle())
-                .padding()
+                .padding(.horizontal)
+                .padding(.top, 8)
+                .padding(.bottom, 4)
                 
                 TabView(selection: $selectedTab) {
                     VoiceSettingsTabView(viewModel: viewModel)
@@ -155,6 +155,7 @@ struct SettingsView: View {
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             }
             .navigationTitle("设置")
+            .navigationBarTitleDisplayMode(.inline) // 小屏幕设备使用内联标题
         }
     }
 }
@@ -177,10 +178,11 @@ struct VoiceSettingsTabView: View {
                     }
                 }
                 
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text("语速: \(Int(viewModel.speechRate * 100))%")
                     Slider(value: $viewModel.speechRate, in: 0.1...1.0, step: 0.1)
                 }
+                .padding(.vertical, 4)
             }
             
             Section {
@@ -199,7 +201,7 @@ struct HistoryTabView: View {
     @ObservedObject var viewModel: SettingsViewModel
     
     var body: some View {
-        VStack {
+        Group {
             if viewModel.timerHistory.isEmpty {
                 VStack {
                     Spacer()
@@ -209,38 +211,41 @@ struct HistoryTabView: View {
                     Spacer()
                 }
             } else {
-                List {
-                    ForEach(viewModel.timerHistory) { item in
-                        VStack(alignment: .leading) {
-                            Text(formatDate(item.date))
-                                .font(.headline)
-                            
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text("总时间: \(formatTime(item.totalTime))")
-                                    Text("圈距离: \(item.lapDistance) 米")
-                                }
+                VStack {
+                    List {
+                        ForEach(viewModel.timerHistory) { item in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(formatDate(item.date))
+                                    .font(.headline)
                                 
-                                Spacer()
-                                
-                                VStack(alignment: .trailing) {
-                                    Text("每圈: \(item.lapTime) 秒")
-                                    Text("完成圈数: \(item.completedLaps)")
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("总时间: \(formatTime(item.totalTime))")
+                                        Text("圈距离: \(item.lapDistance) 米")
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    VStack(alignment: .trailing, spacing: 2) {
+                                        Text("每圈: \(item.lapTime) 秒")
+                                        Text("完成圈数: \(item.completedLaps)")
+                                    }
                                 }
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
                             }
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .padding(.vertical, 4)
                         }
-                        .padding(.vertical, 4)
                     }
-                }
-                
-                Button(action: {
-                    viewModel.clearHistory()
-                }) {
-                    Text("清除历史记录")
-                        .foregroundColor(.red)
-                        .padding()
+                    
+                    Button(action: {
+                        viewModel.clearHistory()
+                    }) {
+                        Text("清除历史记录")
+                            .foregroundColor(.red)
+                            .padding(8)
+                    }
+                    .padding(.bottom, 8)
                 }
             }
         }
@@ -314,6 +319,7 @@ struct AboutTabView: View {
                 }
             }
         }
+        .listStyle(InsetGroupedListStyle()) // 使用更紧凑的列表样式
     }
 }
 

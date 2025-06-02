@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var selectedTab = 0
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -27,6 +28,7 @@ struct ContentView: View {
             }
             .edgesIgnoringSafeArea(.bottom)
             
+            // 自适应底部导航栏
             HStack {
                 Spacer()
                 
@@ -54,15 +56,20 @@ struct ContentView: View {
                 
                 Spacer()
             }
-            .padding(.vertical, 12)
+            .padding(.vertical, isSmallDevice() ? 8 : 12)
             .background(
                 Capsule()
                     .fill(Color(.systemBackground))
                     .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 0)
             )
-            .padding(.horizontal, 24)
-            .padding(.bottom, 8)
+            .padding(.horizontal, isSmallDevice() ? 16 : 24)
+            .padding(.bottom, isSmallDevice() ? 4 : 8)
         }
+    }
+    
+    // 判断是否为小屏幕设备
+    func isSmallDevice() -> Bool {
+        return UIScreen.main.bounds.height <= 667 // iPhone 8及更小的设备
     }
 }
 
@@ -75,11 +82,11 @@ struct TabBarButton: View {
         Button(action: action) {
             VStack(spacing: 4) {
                 Image(systemName: iconName)
-                    .font(.system(size: 22))
+                    .font(.system(size: UIScreen.main.bounds.height <= 667 ? 18 : 22))
                     .foregroundColor(isSelected ? .blue : .gray)
             }
-            .padding(.vertical, 8)
-            .frame(width: 60)
+            .padding(.vertical, UIScreen.main.bounds.height <= 667 ? 6 : 8)
+            .frame(width: UIScreen.main.bounds.height <= 667 ? 50 : 60)
         }
     }
 }

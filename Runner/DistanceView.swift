@@ -107,127 +107,130 @@ struct DistanceView: View {
     
     var body: some View {
         NavigationView {
-            VStack {
-                // 地图
-                Map(coordinateRegion: $locationManager.region, showsUserLocation: true)
-                    .edgesIgnoringSafeArea(.top)
-                    .frame(height: 300)
-                
-                // 距离信息
-                VStack(spacing: 20) {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("总距离")
-                                .font(.headline)
-                                .foregroundColor(.secondary)
-                            Text(String(format: "%.2f 米", locationManager.totalDistance))
-                                .font(.title)
-                                .fontWeight(.bold)
-                        }
-                        
-                        Spacer()
-                        
-                        VStack(alignment: .trailing) {
-                            Text("当前圈")
-                                .font(.headline)
-                                .foregroundColor(.secondary)
-                            Text("\(locationManager.lapCount + 1)")
-                                .font(.title)
-                                .fontWeight(.bold)
-                        }
-                    }
+            ScrollView {
+                VStack(spacing: 15) {
+                    // 地图
+                    Map(coordinateRegion: $locationManager.region, showsUserLocation: true)
+                        .frame(height: 250)
+                        .cornerRadius(12)
+                        .padding(.horizontal)
                     
-                    HStack {
+                    // 距离信息
+                    VStack(spacing: 20) {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("总距离")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                                Text(String(format: "%.2f 米", locationManager.totalDistance))
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                            }
+                            
+                            Spacer()
+                            
+                            VStack(alignment: .trailing) {
+                                Text("当前圈")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                                Text("\(locationManager.lapCount + 1)")
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                            }
+                        }
+                        
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("圈距离")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                                
+                                HStack {
+                                    TextField("圈距离", value: $locationManager.lapDistance, formatter: NumberFormatter())
+                                        .keyboardType(.decimalPad)
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .frame(width: 80)
+                                    
+                                    Text("米")
+                                }
+                            }
+                            
+                            Spacer()
+                            
+                            VStack(alignment: .trailing) {
+                                Text("当前圈距离")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                                Text(String(format: "%.2f 米", locationManager.currentLapDistance))
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                            }
+                        }
+                        
+                        // 进度条
                         VStack(alignment: .leading) {
-                            Text("圈距离")
+                            Text("当前圈进度")
                                 .font(.headline)
                                 .foregroundColor(.secondary)
                             
-                            HStack {
-                                TextField("圈距离", value: $locationManager.lapDistance, formatter: NumberFormatter())
-                                    .keyboardType(.decimalPad)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .frame(width: 80)
-                                
-                                Text("米")
+                            GeometryReader { geometry in
+                                ZStack(alignment: .leading) {
+                                    Rectangle()
+                                        .frame(width: geometry.size.width, height: 20)
+                                        .opacity(0.3)
+                                        .foregroundColor(.gray)
+                                    
+                                    Rectangle()
+                                        .frame(width: min(CGFloat(locationManager.currentLapDistance / locationManager.lapDistance) * geometry.size.width, geometry.size.width), height: 20)
+                                        .foregroundColor(.blue)
+                                }
+                                .cornerRadius(10)
                             }
+                            .frame(height: 20)
                         }
-                        
-                        Spacer()
-                        
-                        VStack(alignment: .trailing) {
-                            Text("当前圈距离")
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemBackground))
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    )
+                    .padding(.horizontal)
+                    
+                    // 控制按钮
+                    HStack(spacing: 20) {
+                        Button(action: {
+                            if locationManager.isTracking {
+                                locationManager.stopTracking()
+                            } else {
+                                locationManager.startTracking()
+                            }
+                        }) {
+                            Text(locationManager.isTracking ? "停止" : "开始")
                                 .font(.headline)
-                                .foregroundColor(.secondary)
-                            Text(String(format: "%.2f 米", locationManager.currentLapDistance))
-                                .font(.title2)
-                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .frame(width: 100, height: 50)
+                                .background(locationManager.isTracking ? Color.red : Color.green)
+                                .cornerRadius(10)
                         }
-                    }
-                    
-                    // 进度条
-                    VStack(alignment: .leading) {
-                        Text("当前圈进度")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
                         
-                        GeometryReader { geometry in
-                            ZStack(alignment: .leading) {
-                                Rectangle()
-                                    .frame(width: geometry.size.width, height: 20)
-                                    .opacity(0.3)
-                                    .foregroundColor(.gray)
-                                
-                                Rectangle()
-                                    .frame(width: min(CGFloat(locationManager.currentLapDistance / locationManager.lapDistance) * geometry.size.width, geometry.size.width), height: 20)
-                                    .foregroundColor(.blue)
-                            }
-                            .cornerRadius(10)
+                        Button(action: {
+                            locationManager.resetTracking()
+                        }) {
+                            Text("重置")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(width: 100, height: 50)
+                                .background(Color.blue)
+                                .cornerRadius(10)
                         }
-                        .frame(height: 20)
                     }
+                    .padding(.vertical)
                 }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemBackground))
-                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                )
-                .padding()
-                
-                // 控制按钮
-                HStack(spacing: 20) {
-                    Button(action: {
-                        if locationManager.isTracking {
-                            locationManager.stopTracking()
-                        } else {
-                            locationManager.startTracking()
-                        }
-                    }) {
-                        Text(locationManager.isTracking ? "停止" : "开始")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(width: 100, height: 50)
-                            .background(locationManager.isTracking ? Color.red : Color.green)
-                            .cornerRadius(10)
-                    }
-                    
-                    Button(action: {
-                        locationManager.resetTracking()
-                    }) {
-                        Text("重置")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(width: 100, height: 50)
-                            .background(Color.blue)
-                            .cornerRadius(10)
-                    }
-                }
-                .padding(.bottom)
-                
-                Spacer()
+                .padding(.vertical)
             }
             .navigationTitle("测距")
+            .edgesIgnoringSafeArea(.top)
         }
     }
 }
