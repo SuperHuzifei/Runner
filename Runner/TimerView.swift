@@ -233,32 +233,37 @@ class TimerViewModel: ObservableObject {
     }
     
     private func configureUtterance(_ utterance: AVSpeechUtterance) {
-        // 获取保存的设置
+        // 获取当前语言代码
         let languageCode = settingsManager.getLanguageCode()
-        let speechRate = settingsManager.getSpeechRate()
         
-        // 设置语音参数
-        utterance.voice = AVSpeechSynthesisVoice(language: languageCode)
-        utterance.rate = speechRate
+        // 获取选择的语音
+        if let voice = settingsManager.getSelectedVoice() {
+            // 确保语音与当前语言匹配
+            if voice.language.hasPrefix(languageCode) {
+                utterance.voice = voice
+                print("使用语音: \(voice.name), 语言: \(voice.language)")
+            } else {
+                // 如果选择的语音与当前语言不匹配，尝试找到匹配的语音
+                print("选择的语音(\(voice.language))与当前语言(\(languageCode))不匹配，尝试查找匹配的语音")
+                let matchingVoices = AVSpeechSynthesisVoice.speechVoices().filter { $0.language == languageCode }
+                if let firstMatch = matchingVoices.first {
+                    utterance.voice = firstMatch
+                    print("找到匹配的语音: \(firstMatch.name)")
+                } else {
+                    // 如果没有找到匹配的语音，使用默认语音
+                    utterance.voice = AVSpeechSynthesisVoice(language: languageCode)
+                    print("未找到匹配的语音，使用默认语音")
+                }
+            }
+        } else {
+            // 如果没有选择语音，使用默认语音
+            utterance.voice = AVSpeechSynthesisVoice(language: languageCode)
+            print("未选择语音，使用默认语音，语言: \(languageCode)")
+        }
+        
+        // 获取语速
+        utterance.rate = settingsManager.getSpeechRate()
         utterance.volume = 1.0
-    }
-}
-
-// 单例管理器，用于在视图模型之间共享设置
-class SettingsManager {
-    static let shared = SettingsManager()
-    
-    private init() {}
-    
-    func getLanguageCode() -> String {
-        let languages = ["zh-CN", "en-US", "en-GB"]
-        let selectedLanguage = UserDefaults.standard.integer(forKey: "language")
-        return selectedLanguage < languages.count ? languages[selectedLanguage] : "zh-CN"
-    }
-    
-    func getSpeechRate() -> Float {
-        let rate = UserDefaults.standard.double(forKey: "speechRate")
-        return rate > 0 ? Float(rate) : 0.5
     }
 }
 
@@ -476,27 +481,73 @@ struct TimeDigitView: View {
 
 struct VoiceSettingsView: View {
     @StateObject private var viewModel = SettingsViewModel()
+    @State private var searchText = ""
+    
+    var filteredVoices: [VoiceOption] {
+        if searchText.isEmpty {
+            return viewModel.availableVoices
+        } else {
+            return viewModel.availableVoices.filter {
+                $0.name.lowercased().contains(searchText.lowercased()) ||
+                $0.gender.lowercased().contains(searchText.lowercased())
+            }
+        }
+    }
     
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("语音设置")) {
-                    Picker("声音性别", selection: $viewModel.selectedVoiceGender) {
-                        ForEach(0..<viewModel.voiceGenders.count) { index in
-                            Text(viewModel.voiceGenders[index]).tag(index)
-                        }
-                    }
-                    
+                Section(header: Text("语言选择").font(.subheadline)) {
                     Picker("语言", selection: $viewModel.selectedLanguage) {
                         ForEach(0..<viewModel.languages.count) { index in
                             Text(viewModel.languages[index]).tag(index)
                         }
                     }
-                    
+                }
+                
+                Section(header: Text("可用语音").font(.subheadline)) {
+                    if viewModel.availableVoices.isEmpty {
+                        Text("正在加载语音...")
+                            .foregroundColor(.secondary)
+                    } else {
+                        // 添加一个搜索栏
+                        if #available(iOS 15.0, *) {
+                            List {
+                                ForEach(filteredVoices) { voice in
+                                    VoiceRow(voice: voice, isSelected: viewModel.selectedVoice == voice.identifier) {
+                                        viewModel.selectedVoice = voice.identifier
+                                        UserDefaults.standard.set(voice.identifier, forKey: "selectedVoiceIdentifier")
+                                    }
+                                }
+                            }
+                            .listStyle(PlainListStyle())
+                            .searchable(text: $searchText, prompt: "搜索语音")
+                            .frame(height: 250) // 使用固定高度
+                        } else {
+                            TextField("搜索语音", text: $searchText)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .padding(.vertical, 4) // 减小垂直内边距
+                            
+                            List {
+                                ForEach(filteredVoices) { voice in
+                                    VoiceRow(voice: voice, isSelected: viewModel.selectedVoice == voice.identifier) {
+                                        viewModel.selectedVoice = voice.identifier
+                                        UserDefaults.standard.set(voice.identifier, forKey: "selectedVoiceIdentifier")
+                                    }
+                                }
+                            }
+                            .listStyle(PlainListStyle())
+                            .frame(height: 250) // 使用固定高度
+                        }
+                    }
+                }
+                
+                Section(header: Text("语速设置").font(.subheadline)) {
                     VStack(alignment: .leading) {
                         Text("语速: \(Int(viewModel.speechRate * 100))%")
                         Slider(value: $viewModel.speechRate, in: 0.1...1.0, step: 0.1)
                     }
+                    .padding(.vertical, 4) // 减小垂直内边距
                 }
                 
                 Section {
@@ -509,6 +560,57 @@ struct VoiceSettingsView: View {
                 }
             }
             .navigationTitle("语音设置")
+            .onAppear {
+                // 加载用户选择的语音
+                if let savedIdentifier = UserDefaults.standard.string(forKey: "selectedVoiceIdentifier") {
+                    viewModel.selectedVoice = savedIdentifier
+                }
+            }
+        }
+    }
+}
+
+struct VoiceRow: View {
+    let voice: VoiceOption
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) { // 减小间距
+                    Text(voice.name)
+                        .fontWeight(isSelected ? .bold : .regular)
+                        .font(.system(size: 15)) // 减小字体大小
+                    
+                    Text("\(voice.gender) • \(getLanguageName(voice.language)) • \(voice.quality)")
+                        .font(.caption2) // 使用更小的字体
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .foregroundColor(.blue)
+                }
+            }
+            .contentShape(Rectangle())
+            .padding(.vertical, 2) // 减小垂直内边距
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private func getLanguageName(_ code: String) -> String {
+        switch code {
+        case "zh-CN": return "中文 (普通话)"
+        case "en-US": return "美式英语"
+        case "en-GB": return "英式英语"
+        case "en-AU": return "澳式英语"
+        case "en-IE": return "爱尔兰英语"
+        case "en-ZA": return "南非英语"
+        case "en-IN": return "印度英语"
+        default: return code
         }
     }
 }

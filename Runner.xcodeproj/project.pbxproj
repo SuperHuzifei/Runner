@@ -19,6 +19,7 @@
 		7442B8FE2DED888D0051EDC0 /* TimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7442B8F82DED888D0051EDC0 /* TimerView.swift */; };
 		7442B8FF2DED888D0051EDC0 /* DistanceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7442B8F92DED888D0051EDC0 /* DistanceView.swift */; };
 		7442B9002DED888D0051EDC0 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7442B8FA2DED888D0051EDC0 /* HomeView.swift */; };
+		74E247F82DEE0CFC00A3CC6E /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74E247F72DEE0CFC00A3CC6E /* SettingsManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,6 +55,7 @@
 		7442B8F82DED888D0051EDC0 /* TimerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimerView.swift; sourceTree = "<group>"; };
 		7442B8F92DED888D0051EDC0 /* DistanceView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DistanceView.swift; sourceTree = "<group>"; };
 		7442B8FA2DED888D0051EDC0 /* HomeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		74E247F72DEE0CFC00A3CC6E /* SettingsManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -106,6 +108,7 @@
 			children = (
 				7442B8CC2DED83190051EDC0 /* RunnerApp.swift */,
 				7442B8CE2DED83190051EDC0 /* ContentView.swift */,
+				74E247F72DEE0CFC00A3CC6E /* SettingsManager.swift */,
 				7442B8F92DED888D0051EDC0 /* DistanceView.swift */,
 				7442B8FA2DED888D0051EDC0 /* HomeView.swift */,
 				7442B8F62DED888D0051EDC0 /* SettingsView.swift */,
@@ -276,6 +279,7 @@
 				7442B9002DED888D0051EDC0 /* HomeView.swift in Sources */,
 				7442B8FF2DED888D0051EDC0 /* DistanceView.swift in Sources */,
 				7442B8FC2DED888D0051EDC0 /* SettingsView.swift in Sources */,
+				74E247F82DEE0CFC00A3CC6E /* SettingsManager.swift in Sources */,
 				7442B8FD2DED888D0051EDC0 /* WatchApp.swift in Sources */,
 				7442B8CF2DED83190051EDC0 /* ContentView.swift in Sources */,
 				7442B8CD2DED83190051EDC0 /* RunnerApp.swift in Sources */,
