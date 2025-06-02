@@ -42,6 +42,9 @@ class SettingsViewModel: ObservableObject {
     let languages = ["中文 (普通话)", "英语 (美国)", "英语 (英国)"]
     let languageCodes = ["zh-CN", "en-US", "en-GB"]
     
+    private let audioSession = AVAudioSession.sharedInstance()
+    private let speechSynthesizer = AVSpeechSynthesizer()
+    
     init() {
         // 加载用户设置
         selectedVoiceGender = UserDefaults.standard.integer(forKey: "voiceGender")
@@ -54,6 +57,18 @@ class SettingsViewModel: ObservableObject {
         
         // 加载历史记录
         loadHistory()
+        
+        // 设置音频会话
+        setupAudioSession()
+    }
+    
+    private func setupAudioSession() {
+        do {
+            try audioSession.setCategory(.playback, mode: .default, options: [.duckOthers, .mixWithOthers])
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        } catch {
+            print("设置音频会话失败: \(error.localizedDescription)")
+        }
     }
     
     func getVoiceCode() -> String {
@@ -64,8 +79,19 @@ class SettingsViewModel: ObservableObject {
         let utterance = AVSpeechUtterance(string: "这是一个测试")
         utterance.voice = AVSpeechSynthesisVoice(language: getVoiceCode())
         utterance.rate = Float(speechRate)
-        let synthesizer = AVSpeechSynthesizer()
-        synthesizer.speak(utterance)
+        utterance.volume = 1.0  // 设置最大音量
+        utterance.pitchMultiplier = selectedVoiceGender == 0 ? 0.8 : 1.2  // 男声低音调，女声高音调
+        
+        // 确保音频会话处于活动状态
+        do {
+            if !audioSession.isOtherAudioPlaying {
+                try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+            }
+        } catch {
+            print("激活音频会话失败: \(error.localizedDescription)")
+        }
+        
+        speechSynthesizer.speak(utterance)
     }
     
     func addHistoryItem(totalTime: Int, lapDistance: Int, lapTime: Int, completedLaps: Int) {

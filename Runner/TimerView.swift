@@ -21,6 +21,21 @@ class TimerViewModel: ObservableObject {
     
     private var timer: Timer?
     private let speechSynthesizer = AVSpeechSynthesizer()
+    private let audioSession = AVAudioSession.sharedInstance()
+    private let settingsManager = SettingsManager.shared
+    
+    init() {
+        setupAudioSession()
+    }
+    
+    private func setupAudioSession() {
+        do {
+            try audioSession.setCategory(.playback, mode: .default)
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        } catch {
+            print("设置音频会话失败: \(error.localizedDescription)")
+        }
+    }
     
     func calculateLapTime() {
         let totalTimeInSeconds = totalMinutes * 60 + totalSeconds
@@ -73,16 +88,54 @@ class TimerViewModel: ObservableObject {
     
     func speakCurrentSecond() {
         let utterance = AVSpeechUtterance(string: "\(currentLapSeconds)")
-        utterance.voice = AVSpeechSynthesisVoice(language: "zh-CN")
-        utterance.rate = 0.5
+        
+        // 使用设置中的语音配置
+        configureUtterance(utterance)
+        
+        // 停止当前正在播放的语音
+        if speechSynthesizer.isSpeaking {
+            speechSynthesizer.stopSpeaking(at: .immediate)
+        }
+        
         speechSynthesizer.speak(utterance)
     }
     
     func speakMessage(_ message: String) {
         let utterance = AVSpeechUtterance(string: message)
-        utterance.voice = AVSpeechSynthesisVoice(language: "zh-CN")
-        utterance.rate = 0.5
+        
+        // 使用设置中的语音配置
+        configureUtterance(utterance)
+        
         speechSynthesizer.speak(utterance)
+    }
+    
+    private func configureUtterance(_ utterance: AVSpeechUtterance) {
+        // 获取保存的设置
+        let languageCode = settingsManager.getLanguageCode()
+        let speechRate = settingsManager.getSpeechRate()
+        
+        // 设置语音参数
+        utterance.voice = AVSpeechSynthesisVoice(language: languageCode)
+        utterance.rate = speechRate
+        utterance.volume = 1.0
+    }
+}
+
+// 单例管理器，用于在视图模型之间共享设置
+class SettingsManager {
+    static let shared = SettingsManager()
+    
+    private init() {}
+    
+    func getLanguageCode() -> String {
+        let languages = ["zh-CN", "en-US", "en-GB"]
+        let selectedLanguage = UserDefaults.standard.integer(forKey: "language")
+        return selectedLanguage < languages.count ? languages[selectedLanguage] : "zh-CN"
+    }
+    
+    func getSpeechRate() -> Float {
+        let rate = UserDefaults.standard.double(forKey: "speechRate")
+        return rate > 0 ? Float(rate) : 0.5
     }
 }
 
@@ -268,43 +321,33 @@ struct TimeDigitView: View {
 }
 
 struct VoiceSettingsView: View {
-    @State private var selectedVoiceGender = 0
-    @State private var selectedLanguage = 0
-    @State private var speechRate: Double = 0.5
-    
-    let voiceGenders = ["男声", "女声"]
-    let languages = ["中文 (普通话)", "英语 (美国)", "英语 (英国)"]
+    @StateObject private var viewModel = SettingsViewModel()
     
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("语音设置")) {
-                    Picker("声音性别", selection: $selectedVoiceGender) {
-                        ForEach(0..<voiceGenders.count) { index in
-                            Text(voiceGenders[index]).tag(index)
+                    Picker("声音性别", selection: $viewModel.selectedVoiceGender) {
+                        ForEach(0..<viewModel.voiceGenders.count) { index in
+                            Text(viewModel.voiceGenders[index]).tag(index)
                         }
                     }
                     
-                    Picker("语言", selection: $selectedLanguage) {
-                        ForEach(0..<languages.count) { index in
-                            Text(languages[index]).tag(index)
+                    Picker("语言", selection: $viewModel.selectedLanguage) {
+                        ForEach(0..<viewModel.languages.count) { index in
+                            Text(viewModel.languages[index]).tag(index)
                         }
                     }
                     
                     VStack(alignment: .leading) {
-                        Text("语速: \(Int(speechRate * 100))%")
-                        Slider(value: $speechRate, in: 0.1...1.0, step: 0.1)
+                        Text("语速: \(Int(viewModel.speechRate * 100))%")
+                        Slider(value: $viewModel.speechRate, in: 0.1...1.0, step: 0.1)
                     }
                 }
                 
                 Section {
                     Button(action: {
-                        // 测试语音
-                        let utterance = AVSpeechUtterance(string: "这是一个测试")
-                        utterance.voice = AVSpeechSynthesisVoice(language: "zh-CN")
-                        utterance.rate = Float(speechRate)
-                        let synthesizer = AVSpeechSynthesizer()
-                        synthesizer.speak(utterance)
+                        viewModel.testVoice()
                     }) {
                         Text("测试语音")
                             .frame(maxWidth: .infinity)
