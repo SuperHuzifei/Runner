@@ -11,12 +11,13 @@ import AVFoundation
 class TimerViewModel: ObservableObject {
     @Published var totalMinutes: Int = 4
     @Published var totalSeconds: Int = 25
+    @Published var totalDistance: Int = 1000  // 新增总距离，默认1000米
     @Published var lapDistance: Int = 200
     @Published var lapTime: Int = 53
     
     @Published var isRunning: Bool = false
     @Published var remainingTime: Int = 0
-    @Published var currentLapSeconds: Int = 0
+    @Published var currentLapRemainingSeconds: Int = 0  // 修改为当前圈剩余秒数
     @Published var currentLap: Int = 1
     
     private var timer: Timer?
@@ -135,16 +136,26 @@ class TimerViewModel: ObservableObject {
     }
     
     func calculateLapTime() {
+        // 确保总距离和每圈距离都大于0
+        guard totalDistance > 0 && lapDistance > 0 else {
+            return
+        }
+        
+        // 计算总圈数
+        let totalLaps = Double(totalDistance) / Double(lapDistance)
+        
+        // 计算总时间（秒）
         let totalTimeInSeconds = totalMinutes * 60 + totalSeconds
-        let numberOfLaps = Double(totalTimeInSeconds) / Double(lapTime)
-        lapTime = Int(Double(totalTimeInSeconds) / round(numberOfLaps))
+        
+        // 计算每圈时间 = 总时间 / 总圈数
+        lapTime = Int(Double(totalTimeInSeconds) / totalLaps)
     }
     
     func startTimer() {
         if !isRunning {
             isRunning = true
             remainingTime = totalMinutes * 60 + totalSeconds
-            currentLapSeconds = 1
+            currentLapRemainingSeconds = lapTime  // 初始化为每圈总时间，从每圈时间开始倒数
             
             // 确保音频会话处于活动状态
             setupAudioSession()
@@ -160,13 +171,14 @@ class TimerViewModel: ObservableObject {
                 if self.remainingTime > 0 {
                     self.remainingTime -= 1
                     
-                    // 播报当前秒数
+                    // 播报当前圈内剩余秒数
                     self.speakCurrentSecond()
                     
-                    // 更新当前圈内秒数
-                    self.currentLapSeconds += 1
-                    if self.currentLapSeconds > self.lapTime {
-                        self.currentLapSeconds = 1
+                    // 更新当前圈内剩余秒数
+                    self.currentLapRemainingSeconds -= 1
+                    if self.currentLapRemainingSeconds <= 0 {
+                        // 当前圈结束，开始下一圈
+                        self.currentLapRemainingSeconds = self.lapTime
                         self.currentLap += 1
                     }
                 } else {
@@ -193,12 +205,12 @@ class TimerViewModel: ObservableObject {
     func resetTimer() {
         pauseTimer()
         remainingTime = totalMinutes * 60 + totalSeconds
-        currentLapSeconds = 1
+        currentLapRemainingSeconds = lapTime  // 重置为每圈总时间
         currentLap = 1
     }
     
     func speakCurrentSecond() {
-        let utterance = AVSpeechUtterance(string: "\(currentLapSeconds)")
+        let utterance = AVSpeechUtterance(string: "\(currentLapRemainingSeconds)")
         
         // 使用设置中的语音配置
         configureUtterance(utterance)
@@ -292,6 +304,22 @@ struct TimerView: View {
                         }
                         
                         HStack {
+                            Text("总距离:")
+                                .font(.headline)
+                            
+                            Spacer()
+                            
+                            HStack {
+                                TextField("总距离", value: $viewModel.totalDistance, formatter: NumberFormatter())
+                                    .keyboardType(.numberPad)
+                                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                                    .frame(width: 80)
+                                
+                                Text("米")
+                            }
+                        }
+                        
+                        HStack {
                             Text("每圈距离:")
                                 .font(.headline)
                             
@@ -329,6 +357,20 @@ struct TimerView: View {
                                 .font(.title2)
                                 .fontWeight(.bold)
                         }
+                        
+                        // 显示总圈数
+                        if viewModel.totalDistance > 0 && viewModel.lapDistance > 0 {
+                            HStack {
+                                Text("总圈数:")
+                                    .font(.headline)
+                                
+                                Spacer()
+                                
+                                Text(String(format: "%.1f", Double(viewModel.totalDistance) / Double(viewModel.lapDistance)))
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                            }
+                        }
                     }
                     .padding()
                     .background(
@@ -356,7 +398,7 @@ struct TimerView: View {
                             
                             Spacer()
                             
-                            Text("当前秒数: \(viewModel.currentLapSeconds)")
+                            Text("圈内倒计时: \(viewModel.currentLapRemainingSeconds)")
                                 .font(.headline)
                         }
                         .padding(.top)
