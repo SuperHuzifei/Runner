@@ -240,7 +240,7 @@ class TimerViewModel: ObservableObject {
         if let voice = settingsManager.getSelectedVoice() {
             // 确保语音与当前语言匹配
             if voice.language.hasPrefix(languageCode) {
-                utterance.voice = voice
+            utterance.voice = voice
                 print("使用语音: \(voice.name), 语言: \(voice.language)")
             } else {
                 // 如果选择的语音与当前语言不匹配，尝试找到匹配的语音
@@ -558,7 +558,7 @@ struct VoiceSettingsView: View {
                             .frame(maxWidth: .infinity)
                     }
                 }
-            }
+                    }
             .navigationTitle("语音设置")
             .onAppear {
                 // 加载用户选择的语音

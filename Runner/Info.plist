@@ -22,11 +22,14 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>需要您的位置权限来测量跑步距离和圈数</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>需要您的位置权限来持续测量跑步距离，即使应用在后台运行</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
+		<string>location</string>
 	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
