@@ -270,18 +270,6 @@ struct SettingsView: View {
 
 struct VoiceSettingsTabView: View {
     @ObservedObject var viewModel: SettingsViewModel
-    @State private var searchText = ""
-    
-    var filteredVoices: [VoiceOption] {
-        if searchText.isEmpty {
-            return viewModel.availableVoices
-        } else {
-            return viewModel.availableVoices.filter {
-                $0.name.lowercased().contains(searchText.lowercased()) ||
-                $0.gender.lowercased().contains(searchText.lowercased())
-            }
-        }
-    }
     
     var body: some View {
         Form {
@@ -298,35 +286,16 @@ struct VoiceSettingsTabView: View {
                     Text("正在加载语音...")
                         .foregroundColor(.secondary)
                 } else {
-                    // 添加一个搜索栏
-                    if #available(iOS 15.0, *) {
-                        List {
-                            ForEach(filteredVoices) { voice in
-                                VoiceRow(voice: voice, isSelected: viewModel.selectedVoice == voice.identifier) {
-                                    viewModel.selectedVoice = voice.identifier
-                                    UserDefaults.standard.set(voice.identifier, forKey: "selectedVoiceIdentifier")
-                                }
+                    List {
+                        ForEach(viewModel.availableVoices) { voice in
+                            VoiceRow(voice: voice, isSelected: viewModel.selectedVoice == voice.identifier) {
+                                viewModel.selectedVoice = voice.identifier
+                                UserDefaults.standard.set(voice.identifier, forKey: "selectedVoiceIdentifier")
                             }
                         }
-                        .listStyle(PlainListStyle())
-                        .searchable(text: $searchText, prompt: "搜索语音")
-                        .frame(height: 250) // 使用固定高度而不是最小高度
-                    } else {
-                        TextField("搜索语音", text: $searchText)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .padding(.vertical, 4) // 减小垂直内边距
-                        
-                        List {
-                            ForEach(filteredVoices) { voice in
-                                VoiceRow(voice: voice, isSelected: viewModel.selectedVoice == voice.identifier) {
-                                    viewModel.selectedVoice = voice.identifier
-                                    UserDefaults.standard.set(voice.identifier, forKey: "selectedVoiceIdentifier")
-                                }
-                            }
-                        }
-                        .listStyle(PlainListStyle())
-                        .frame(height: 250) // 使用固定高度而不是最小高度
                     }
+                    .listStyle(PlainListStyle())
+                    .frame(height: 250) // 使用固定高度
                 }
             }
             

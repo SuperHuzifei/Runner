@@ -9,16 +9,32 @@ import SwiftUI
 import AVFoundation
 
 class TimerViewModel: ObservableObject {
-    @Published var totalMinutes: Int = 4
-    @Published var totalSeconds: Int = 25
+    @Published var totalMinutes: Int = 4 {
+        didSet {
+            calculateLapTime()
+            if !isRunning {
+                updateRemainingTime()
+            }
+        }
+    }
+    @Published var totalSeconds: Int = 25 {
+        didSet {
+            calculateLapTime()
+            if !isRunning {
+                updateRemainingTime()
+            }
+        }
+    }
     @Published var totalDistance: Int = 1000 {
         didSet {
             validateCurrentLap()
+            calculateLapTime()
         }
     }
     @Published var lapDistance: Int = 200 {
         didSet {
             validateCurrentLap()
+            calculateLapTime()
         }
     }
     @Published var lapTime: Int = 53
@@ -38,6 +54,13 @@ class TimerViewModel: ObservableObject {
     @Published var isCountingUp: Bool = false  // 是否正在正向计时
     @Published var countUpSeconds: Int = 0  // 正向计时的秒数
     
+    // 新增模式选择属性
+    @Published var selectedMode: Int = 0 // 0: 计时模式, 1: 配置模式
+    
+    // 新增错误提示属性
+    @Published var showAlert: Bool = false
+    @Published var alertMessage: String = ""
+    
     private var timer: Timer?
     private let speechSynthesizer = AVSpeechSynthesizer()
     private let audioSession = AVAudioSession.sharedInstance()
@@ -49,6 +72,7 @@ class TimerViewModel: ObservableObject {
     init() {
         setupAudioSession()
         registerForNotifications()
+        updateRemainingTime() // 初始化剩余时间
     }
     
     deinit {
@@ -156,6 +180,10 @@ class TimerViewModel: ObservableObject {
     func calculateLapTime() {
         // 确保总距离和每圈距离都大于0
         guard totalDistance > 0 && lapDistance > 0 else {
+            // 当参数无效时，设置默认值，避免显示错误数据
+            if totalDistance <= 0 || lapDistance <= 0 {
+                lapTime = 0
+            }
             return
         }
         
@@ -165,11 +193,22 @@ class TimerViewModel: ObservableObject {
         // 计算总时间（秒）
         let totalTimeInSeconds = totalMinutes * 60 + totalSeconds
         
+        // 防止总时间为0导致计算问题
+        if totalTimeInSeconds <= 0 {
+            lapTime = 0
+            return
+        }
+        
         // 计算每圈时间 = 总时间 / 总圈数
         lapTime = Int(Double(totalTimeInSeconds) / totalLaps)
         
         // 验证当前圈数
         validateCurrentLap()
+    }
+    
+    // 新增方法：更新剩余时间
+    private func updateRemainingTime() {
+        remainingTime = totalMinutes * 60 + totalSeconds
     }
     
     func startTimer() {
@@ -330,6 +369,8 @@ class TimerViewModel: ObservableObject {
         isTimerCompleted = false  // 重置计时完成状态
         isCountingUp = false  // 重置正向计时状态
         countUpSeconds = 0  // 重置正向计时秒数
+        // 重置为计时模式
+        selectedMode = 0
     }
     
     func speakCurrentSecond() {
@@ -403,6 +444,17 @@ class TimerViewModel: ObservableObject {
             }
         }
     }
+    
+    // 新增方法：尝试切换模式
+    func tryChangeMode(to newMode: Int) -> Bool {
+        if isRunning && newMode == 1 {
+            showAlert = true
+            alertMessage = "计时正在进行中，请先暂停计时后再切换到配置页面"
+            return false
+        }
+        selectedMode = newMode
+        return true
+    }
 }
 
 struct TimerView: View {
@@ -413,266 +465,288 @@ struct TimerView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
-                    // 设置区域
-                    VStack(spacing: 20) {
-                        HStack {
-                            Text("总时间:")
+                    // 标签选择
+                    Picker("模式", selection: Binding(
+                        get: { self.viewModel.selectedMode },
+                        set: { newValue in
+                            // 尝试切换模式，如果失败则不更新选中值
+                            let _ = self.viewModel.tryChangeMode(to: newValue)
+                        }
+                    )) {
+                        Text("计时").tag(0)
+                        Text("配置").tag(1)
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    .padding(.horizontal)
+                    .disabled(viewModel.isRunning) // 当计时运行时禁用选择器
+                    
+                    if viewModel.selectedMode == 0 {
+                        // 计时模式
+                        // 倒计时显示
+                        VStack(spacing: 10) {
+                            Text("剩余时间")
                                 .font(.headline)
+                                .foregroundColor(.secondary)
                             
-                            Spacer()
-                            
-                            HStack {
-                                Picker("分钟", selection: $viewModel.totalMinutes) {
-                                    ForEach(0..<60) { minute in
-                                        Text("\(minute)").tag(minute)
-                                    }
-                                }
-                                .pickerStyle(WheelPickerStyle())
-                                .frame(width: 60)
-                                .clipped()
-                                
-                                Text("分")
-                                
-                                Picker("秒钟", selection: $viewModel.totalSeconds) {
-                                    ForEach(0..<60) { second in
-                                        Text("\(second)").tag(second)
-                                    }
-                                }
-                                .pickerStyle(WheelPickerStyle())
-                                .frame(width: 60)
-                                .clipped()
-                                
-                                Text("秒")
+                            HStack(spacing: 10) {
+                                TimeDigitView(value: max(0, viewModel.remainingTime / 60))
+                                Text(":")
+                                    .font(.system(size: 40, weight: .bold))
+                                TimeDigitView(value: max(0, viewModel.remainingTime % 60))
                             }
-                        }
-                        
-                        HStack {
-                            Text("总距离:")
-                                .font(.headline)
-                            
-                            Spacer()
                             
                             HStack {
-                                TextField("总距离", value: $viewModel.totalDistance, formatter: NumberFormatter())
-                                    .keyboardType(.numberPad)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .frame(width: 80)
-                                
-                                Text("米")
-                            }
-                        }
-                        
-                        HStack {
-                            Text("每圈距离:")
-                                .font(.headline)
-                            
-                            Spacer()
-                            
-                            HStack {
-                                TextField("距离", value: $viewModel.lapDistance, formatter: NumberFormatter())
-                                    .keyboardType(.numberPad)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .frame(width: 80)
-                                
-                                Text("米")
-                            }
-                        }
-                        
-                        Button(action: {
-                            viewModel.calculateLapTime()
-                        }) {
-                            Text("计算每圈时间")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color.blue)
-                                .cornerRadius(10)
-                        }
-                        
-                        HStack {
-                            Text("每圈时间:")
-                                .font(.headline)
-                            
-                            Spacer()
-                            
-                            Text("\(viewModel.lapTime) 秒")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                        }
-                        
-                        // 显示总圈数
-                        if viewModel.totalDistance > 0 && viewModel.lapDistance > 0 {
-                            HStack {
-                                Text("总圈数:")
+                                Text("当前圈数: \(viewModel.currentLap + 1)/\(viewModel.totalLaps())")
                                     .font(.headline)
                                 
                                 Spacer()
                                 
-                                Text(String(format: "%.1f", Double(viewModel.totalDistance) / Double(viewModel.lapDistance)))
+                                if viewModel.isCountingUp {
+                                    // 显示正向计时
+                                    Text("超时: +\(viewModel.countUpSeconds)秒")
+                                        .font(.headline)
+                                        .foregroundColor(.red)
+                                } else {
+                                    // 显示倒计时
+                                    Text("圈内倒计时: \(viewModel.currentLapRemainingSeconds)")
+                                        .font(.headline)
+                                }
+                            }
+                            
+                            // 额外时间状态指示
+                            if viewModel.isInExtraTime {
+                                Text("正在使用额外时间")
+                                    .foregroundColor(.orange)
+                                    .fontWeight(.semibold)
+                                    .padding(.top, 4)
+                            }
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(.systemBackground))
+                                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                        )
+                        
+                        // 完成当前圈按钮 - 固定在这个位置
+                        if viewModel.isRunning && !viewModel.isInExtraTime && !viewModel.isTimerCompleted {
+                            Button(action: {
+                                viewModel.saveCurrentLapRemainingTime()
+                            }) {
+                                HStack {
+                                    Image(systemName: "flag.checkered")
+                                    if viewModel.isCountingUp {
+                                        Text("完成本圈 (已超时)")
+                                            .fontWeight(.semibold)
+                                    } else {
+                                        Text("完成本圈")
+                                            .fontWeight(.semibold)
+                                    }
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(viewModel.isCountingUp ? Color.red : Color.blue)
+                                .cornerRadius(10)
+                            }
+                            .padding(.horizontal)
+                        }
+                        
+                        // 控制按钮
+                        HStack(spacing: 20) {
+                            Button(action: {
+                                if viewModel.isRunning {
+                                    viewModel.pauseTimer()
+                                } else {
+                                    viewModel.startTimer()
+                                }
+                            }) {
+                                Image(systemName: viewModel.isRunning ? "pause.fill" : "play.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.white)
+                                    .frame(width: 60, height: 60)
+                                    .background(viewModel.isRunning ? Color.orange : (viewModel.isTimerCompleted ? Color.gray : Color.green))
+                                    .clipShape(Circle())
+                            }
+                            .disabled(viewModel.isTimerCompleted) // 计时完成时禁用开始按钮
+                            
+                            Button(action: {
+                                viewModel.resetTimer()
+                            }) {
+                                Image(systemName: "arrow.counterclockwise")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.white)
+                                    .frame(width: 60, height: 60)
+                                    .background(Color.red)
+                                    .clipShape(Circle())
+                            }
+                        }
+                        .padding(.bottom, 10)
+                        
+                        // 已储存时间和每圈节省时间放在最下方
+                        if viewModel.savedExtraTime != 0 || !viewModel.lapSavedTimes.isEmpty {
+                            VStack(spacing: 8) {
+                                HStack {
+                                    if viewModel.savedExtraTime >= 0 {
+                                        Image(systemName: "clock.badge.checkmark")
+                                            .foregroundColor(.green)
+                                        Text("已储存: \(viewModel.savedExtraTime)秒")
+                                            .foregroundColor(.green)
+                                            .fontWeight(.semibold)
+                                    } else {
+                                        Image(systemName: "clock.badge.exclamationmark")
+                                            .foregroundColor(.red)
+                                        Text("已超时: \(abs(viewModel.savedExtraTime))秒")
+                                            .foregroundColor(.red)
+                                            .fontWeight(.semibold)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    Button(action: {
+                                        viewModel.resetSavedExtraTime()
+                                    }) {
+                                        Image(systemName: "xmark.circle")
+                                            .foregroundColor(.red)
+                                    }
+                                }
+                                
+                                // 显示每圈节省的时间
+                                if !viewModel.lapSavedTimes.isEmpty {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        ForEach(0..<viewModel.lapSavedTimes.count, id: \.self) { index in
+                                            HStack {
+                                                if viewModel.lapSavedTimes[index] >= 0 {
+                                                    Image(systemName: "flag.checkered")
+                                                        .foregroundColor(.green)
+                                                    Text("第\(index + 1)圈节省: \(viewModel.lapSavedTimes[index])秒")
+                                                        .foregroundColor(.green)
+                                                        .fontWeight(.semibold)
+                                                } else {
+                                                    Image(systemName: "flag.checkered")
+                                                        .foregroundColor(.red)
+                                                    Text("第\(index + 1)圈超时: \(abs(viewModel.lapSavedTimes[index]))秒")
+                                                        .foregroundColor(.red)
+                                                        .fontWeight(.semibold)
+                                                }
+                                                
+                                                Spacer()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.systemBackground))
+                                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                            )
+                        }
+                    } else {
+                        // 配置模式 - 设置区域
+                        VStack(spacing: 20) {
+                            HStack {
+                                Text("总时间:")
+                                    .font(.headline)
+                                
+                                Spacer()
+                                
+                                HStack {
+                                    Picker("分钟", selection: $viewModel.totalMinutes) {
+                                        ForEach(0..<60) { minute in
+                                            Text("\(minute)").tag(minute)
+                                        }
+                                    }
+                                    .pickerStyle(WheelPickerStyle())
+                                    .frame(width: 60)
+                                    .clipped()
+                                    
+                                    Text("分")
+                                    
+                                    Picker("秒钟", selection: $viewModel.totalSeconds) {
+                                        ForEach(0..<60) { second in
+                                            Text("\(second)").tag(second)
+                                        }
+                                    }
+                                    .pickerStyle(WheelPickerStyle())
+                                    .frame(width: 60)
+                                    .clipped()
+                                    
+                                    Text("秒")
+                                }
+                            }
+                            
+                            HStack {
+                                Text("总距离:")
+                                    .font(.headline)
+                                
+                                Spacer()
+                                
+                                HStack {
+                                    TextField("总距离", value: $viewModel.totalDistance, formatter: NumberFormatter())
+                                        .keyboardType(.numberPad)
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .frame(width: 80)
+                                        .onChange(of: viewModel.totalDistance) { newValue in
+                                            // 防止负数或过大值
+                                            if newValue <= 0 {
+                                                viewModel.totalDistance = 1
+                                            } else if newValue > 100000 { // 最大10万米
+                                                viewModel.totalDistance = 100000
+                                            }
+                                        }
+                                    
+                                    Text("米")
+                                }
+                            }
+                            
+                            HStack {
+                                Text("每圈距离:")
+                                    .font(.headline)
+                                
+                                Spacer()
+                                
+                                HStack {
+                                    TextField("距离", value: $viewModel.lapDistance, formatter: NumberFormatter())
+                                        .keyboardType(.numberPad)
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .frame(width: 80)
+                                        .onChange(of: viewModel.lapDistance) { newValue in
+                                            // 防止负数或过大值
+                                            if newValue <= 0 {
+                                                viewModel.lapDistance = 1
+                                            } else if newValue > viewModel.totalDistance {
+                                                viewModel.lapDistance = viewModel.totalDistance
+                                            }
+                                        }
+                                    
+                                    Text("米")
+                                }
+                            }
+                            
+                            HStack {
+                                Text("每圈时间:")
+                                    .font(.headline)
+                                
+                                Spacer()
+                                
+                                Text("\(viewModel.lapTime) 秒")
                                     .font(.title2)
                                     .fontWeight(.bold)
                             }
-                        }
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(.systemBackground))
-                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                    )
-                    
-                    // 倒计时显示
-                    VStack(spacing: 10) {
-                        Text("剩余时间")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                        
-                        HStack(spacing: 10) {
-                            TimeDigitView(value: max(0, viewModel.remainingTime / 60))
-                            Text(":")
-                                .font(.system(size: 40, weight: .bold))
-                            TimeDigitView(value: max(0, viewModel.remainingTime % 60))
-                        }
-                        
-                        HStack {
-                            Text("当前圈数: \(viewModel.currentLap + 1)/\(viewModel.totalLaps())")
-                                .font(.headline)
                             
-                            Spacer()
-                            
-                            if viewModel.isCountingUp {
-                                // 显示正向计时
-                                Text("超时: +\(viewModel.countUpSeconds)秒")
-                                    .font(.headline)
-                                    .foregroundColor(.red)
-                            } else {
-                                // 显示倒计时
-                                Text("圈内倒计时: \(viewModel.currentLapRemainingSeconds)")
-                                    .font(.headline)
-                            }
-                        }
-                        
-                        // 额外时间状态指示
-                        if viewModel.isInExtraTime {
-                            Text("正在使用额外时间")
-                                .foregroundColor(.orange)
-                                .fontWeight(.semibold)
-                                .padding(.top, 4)
-                        }
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(.systemBackground))
-                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                    )
-                    
-                    // 完成当前圈按钮 - 固定在这个位置
-                    if viewModel.isRunning && !viewModel.isInExtraTime && !viewModel.isTimerCompleted {
-                        Button(action: {
-                            viewModel.saveCurrentLapRemainingTime()
-                        }) {
-                            HStack {
-                                Image(systemName: "flag.checkered")
-                                if viewModel.isCountingUp {
-                                    Text("完成本圈 (已超时)")
-                                        .fontWeight(.semibold)
-                                } else {
-                                    Text("完成本圈")
-                                        .fontWeight(.semibold)
-                                }
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(viewModel.isCountingUp ? Color.red : Color.blue)
-                            .cornerRadius(10)
-                        }
-                        .padding(.horizontal)
-                    }
-                    
-                    // 控制按钮
-                    HStack(spacing: 20) {
-                        Button(action: {
-                            if viewModel.isRunning {
-                                viewModel.pauseTimer()
-                            } else {
-                                viewModel.startTimer()
-                            }
-                        }) {
-                            Image(systemName: viewModel.isRunning ? "pause.fill" : "play.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(.white)
-                                .frame(width: 60, height: 60)
-                                .background(viewModel.isRunning ? Color.orange : (viewModel.isTimerCompleted ? Color.gray : Color.green))
-                                .clipShape(Circle())
-                        }
-                        .disabled(viewModel.isTimerCompleted) // 计时完成时禁用开始按钮
-                        
-                        Button(action: {
-                            viewModel.resetTimer()
-                        }) {
-                            Image(systemName: "arrow.counterclockwise")
-                                .font(.system(size: 24))
-                                .foregroundColor(.white)
-                                .frame(width: 60, height: 60)
-                                .background(Color.red)
-                                .clipShape(Circle())
-                        }
-                    }
-                    .padding(.bottom, 10)
-                    
-                    // 已储存时间和每圈节省时间放在最下方
-                    if viewModel.savedExtraTime != 0 || !viewModel.lapSavedTimes.isEmpty {
-                        VStack(spacing: 8) {
-                            HStack {
-                                if viewModel.savedExtraTime >= 0 {
-                                    Image(systemName: "clock.badge.checkmark")
-                                        .foregroundColor(.green)
-                                    Text("已储存: \(viewModel.savedExtraTime)秒")
-                                        .foregroundColor(.green)
-                                        .fontWeight(.semibold)
-                                } else {
-                                    Image(systemName: "clock.badge.exclamationmark")
-                                        .foregroundColor(.red)
-                                    Text("已超时: \(abs(viewModel.savedExtraTime))秒")
-                                        .foregroundColor(.red)
-                                        .fontWeight(.semibold)
-                                }
-                                
-                                Spacer()
-                                
-                                Button(action: {
-                                    viewModel.resetSavedExtraTime()
-                                }) {
-                                    Image(systemName: "xmark.circle")
-                                        .foregroundColor(.red)
-                                }
-                            }
-                            
-                            // 显示每圈节省的时间
-                            if !viewModel.lapSavedTimes.isEmpty {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    ForEach(0..<viewModel.lapSavedTimes.count, id: \.self) { index in
-                                        HStack {
-                                            if viewModel.lapSavedTimes[index] >= 0 {
-                                                Image(systemName: "flag.checkered")
-                                                    .foregroundColor(.green)
-                                                Text("第\(index + 1)圈节省: \(viewModel.lapSavedTimes[index])秒")
-                                                    .foregroundColor(.green)
-                                                    .fontWeight(.semibold)
-                                            } else {
-                                                Image(systemName: "flag.checkered")
-                                                    .foregroundColor(.red)
-                                                Text("第\(index + 1)圈超时: \(abs(viewModel.lapSavedTimes[index]))秒")
-                                                    .foregroundColor(.red)
-                                                    .fontWeight(.semibold)
-                                            }
-                                            
-                                            Spacer()
-                                        }
-                                    }
+                            // 显示总圈数
+                            if viewModel.totalDistance > 0 && viewModel.lapDistance > 0 {
+                                HStack {
+                                    Text("总圈数:")
+                                        .font(.headline)
+                                    
+                                    Spacer()
+                                    
+                                    Text(String(format: "%.1f", Double(viewModel.totalDistance) / Double(viewModel.lapDistance)))
+                                        .font(.title2)
+                                        .fontWeight(.bold)
                                 }
                             }
                         }
@@ -699,6 +773,13 @@ struct TimerView: View {
             .sheet(isPresented: $showingSettings) {
                 VoiceSettingsView()
             }
+            .alert(isPresented: $viewModel.showAlert) {
+                Alert(
+                    title: Text("无法切换"),
+                    message: Text(viewModel.alertMessage),
+                    dismissButton: .default(Text("确定"))
+                )
+            }
         }
     }
 }
@@ -720,18 +801,6 @@ struct TimeDigitView: View {
 
 struct VoiceSettingsView: View {
     @StateObject private var viewModel = SettingsViewModel()
-    @State private var searchText = ""
-    
-    var filteredVoices: [VoiceOption] {
-        if searchText.isEmpty {
-            return viewModel.availableVoices
-        } else {
-            return viewModel.availableVoices.filter {
-                $0.name.lowercased().contains(searchText.lowercased()) ||
-                $0.gender.lowercased().contains(searchText.lowercased())
-            }
-        }
-    }
     
     var body: some View {
         NavigationView {
@@ -749,35 +818,16 @@ struct VoiceSettingsView: View {
                         Text("正在加载语音...")
                             .foregroundColor(.secondary)
                     } else {
-                        // 添加一个搜索栏
-                        if #available(iOS 15.0, *) {
-                            List {
-                                ForEach(filteredVoices) { voice in
-                                    VoiceRow(voice: voice, isSelected: viewModel.selectedVoice == voice.identifier) {
-                                        viewModel.selectedVoice = voice.identifier
-                                        UserDefaults.standard.set(voice.identifier, forKey: "selectedVoiceIdentifier")
-                                    }
+                        List {
+                            ForEach(viewModel.availableVoices) { voice in
+                                VoiceRow(voice: voice, isSelected: viewModel.selectedVoice == voice.identifier) {
+                                    viewModel.selectedVoice = voice.identifier
+                                    UserDefaults.standard.set(voice.identifier, forKey: "selectedVoiceIdentifier")
                                 }
                             }
-                            .listStyle(PlainListStyle())
-                            .searchable(text: $searchText, prompt: "搜索语音")
-                            .frame(height: 250) // 使用固定高度
-                        } else {
-                            TextField("搜索语音", text: $searchText)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .padding(.vertical, 4) // 减小垂直内边距
-                            
-                            List {
-                                ForEach(filteredVoices) { voice in
-                                    VoiceRow(voice: voice, isSelected: viewModel.selectedVoice == voice.identifier) {
-                                        viewModel.selectedVoice = voice.identifier
-                                        UserDefaults.standard.set(voice.identifier, forKey: "selectedVoiceIdentifier")
-                                    }
-                                }
-                            }
-                            .listStyle(PlainListStyle())
-                            .frame(height: 250) // 使用固定高度
                         }
+                        .listStyle(PlainListStyle())
+                        .frame(height: 250) // 使用固定高度
                     }
                 }
                 
@@ -797,7 +847,7 @@ struct VoiceSettingsView: View {
                             .frame(maxWidth: .infinity)
                     }
                 }
-                    }
+            }
             .navigationTitle("语音设置")
             .onAppear {
                 // 加载用户选择的语音
