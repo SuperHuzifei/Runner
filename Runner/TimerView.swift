@@ -34,6 +34,10 @@ class TimerViewModel: ObservableObject {
     @Published var isInExtraTime: Bool = false  // 是否在额外时间中
     @Published var lapSavedTimes: [Int] = []  // 存储每圈节省的时间
     
+    // 新增正向计时相关属性
+    @Published var isCountingUp: Bool = false  // 是否正在正向计时
+    @Published var countUpSeconds: Int = 0  // 正向计时的秒数
+    
     private var timer: Timer?
     private let speechSynthesizer = AVSpeechSynthesizer()
     private let audioSession = AVAudioSession.sharedInstance()
@@ -173,6 +177,8 @@ class TimerViewModel: ObservableObject {
             isRunning = true
             remainingTime = totalMinutes * 60 + totalSeconds
             currentLapRemainingSeconds = lapTime  // 初始化为每圈总时间，从每圈时间开始倒数
+            isCountingUp = false  // 重置正向计时状态
+            countUpSeconds = 0  // 重置正向计时秒数
             
             // 确保音频会话处于活动状态
             setupAudioSession()
@@ -185,46 +191,43 @@ class TimerViewModel: ObservableObject {
             timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
                 guard let self = self else { return }
                 
+                // 更新总剩余时间，但不低于0
                 if self.remainingTime > 0 {
                     self.remainingTime -= 1
-                    
+                }
+                
+                // 如果正在正向计时，不播报倒计时秒数
+                if !self.isCountingUp {
                     // 播报当前圈内剩余秒数
                     self.speakCurrentSecond()
-                    
-                    // 更新当前圈内剩余秒数
+                }
+                
+                // 更新计时状态
+                if self.isCountingUp {
+                    // 如果已经在正向计时，增加正向计时秒数
+                    self.countUpSeconds += 1
+                } else {
+                    // 正常倒计时
                     self.currentLapRemainingSeconds -= 1
                     if self.currentLapRemainingSeconds <= 0 {
-                        // 当前圈结束，开始下一圈
+                        // 当前圈倒计时结束
                         if self.shouldEnterExtraTime() {
                             // 进入额外时间模式
                             self.enterExtraTimeMode()
                         } else {
-                            self.currentLapRemainingSeconds = self.lapTime
-                            // 只有当当前圈数小于总圈数-1时才增加圈数
-                            if self.currentLap < self.totalLaps() - 1 {
-                                self.currentLap += 1
-                            } else {
-                                // 如果已经是最后一圈，则结束计时
-                                self.pauseTimer()
-                                self.isTimerCompleted = true
-                                self.speakMessage("计时完成")
-                            }
+                            // 开始正向计时，而不是自动跳到下一圈
+                            self.isCountingUp = true
+                            self.countUpSeconds = 0
+                            self.speakMessage("时间到，请尽快完成本圈")
                         }
                     }
-                } else {
-                    // 如果还有额外时间并且是最后一圈，进入额外时间模式
-                    if self.savedExtraTime > 0 && self.shouldEnterExtraTime() {
-                        self.enterExtraTimeMode()
-                    } else {
-                        self.pauseTimer()
-                        self.isTimerCompleted = true  // 标记计时已完成
-                        // 播报完成提示
-                        if self.savedExtraTime > 0 && self.isInExtraTime {
-                            self.speakMessage("计时完成，您使用了\(self.savedExtraTime)秒额外时间")
-                        } else {
-                            self.speakMessage("计时完成")
-                        }
-                    }
+                }
+                
+                // 只有在额外时间模式下且额外时间用完时才结束计时
+                if self.isInExtraTime && self.currentLapRemainingSeconds <= 0 {
+                    self.pauseTimer()
+                    self.isTimerCompleted = true  // 标记计时已完成
+                    self.speakMessage("额外时间用完，计时完成")
                 }
             }
             
@@ -255,9 +258,18 @@ class TimerViewModel: ObservableObject {
     
     // 添加保存当前圈剩余时间的方法
     func saveCurrentLapRemainingTime() {
-        if currentLapRemainingSeconds > 0 && isRunning {
-            // 记录当前圈节省的时间
-            let savedTime = currentLapRemainingSeconds
+        if isRunning {
+            var savedTime: Int = 0
+            
+            if isCountingUp {
+                // 正在正向计时，表示超时了
+                savedTime = -countUpSeconds  // 负数表示超时
+                isCountingUp = false  // 重置正向计时状态
+                countUpSeconds = 0  // 重置正向计时秒数
+            } else {
+                // 常规情况：还在倒计时中
+                savedTime = currentLapRemainingSeconds
+            }
             
             // 累加保存剩余时间
             savedExtraTime += savedTime
@@ -275,9 +287,12 @@ class TimerViewModel: ObservableObject {
                 // 如果已经是最后一圈，则结束计时
                 pauseTimer()
                 isTimerCompleted = true
-                // 播报总节省时间
+                
+                // 播报总结果
                 if savedExtraTime > 0 {
                     speakMessage("计时完成，总共节省\(savedExtraTime)秒")
+                } else if savedExtraTime < 0 {
+                    speakMessage("计时完成，总共超时\(abs(savedExtraTime))秒")
                 } else {
                     speakMessage("计时完成")
                 }
@@ -290,6 +305,8 @@ class TimerViewModel: ObservableObject {
         savedExtraTime = 0
         lapSavedTimes.removeAll()  // 清空每圈节省时间数组
         isInExtraTime = false
+        isCountingUp = false  // 重置正向计时状态
+        countUpSeconds = 0  // 重置正向计时秒数
     }
     
     func pauseTimer() {
@@ -311,6 +328,8 @@ class TimerViewModel: ObservableObject {
         savedExtraTime = 0  // 确保清空保存的额外时间
         lapSavedTimes.removeAll()  // 清空每圈节省时间数组
         isTimerCompleted = false  // 重置计时完成状态
+        isCountingUp = false  // 重置正向计时状态
+        countUpSeconds = 0  // 重置正向计时秒数
     }
     
     func speakCurrentSecond() {
@@ -510,10 +529,10 @@ struct TimerView: View {
                             .foregroundColor(.secondary)
                         
                         HStack(spacing: 10) {
-                            TimeDigitView(value: viewModel.remainingTime / 60)
+                            TimeDigitView(value: max(0, viewModel.remainingTime / 60))
                             Text(":")
                                 .font(.system(size: 40, weight: .bold))
-                            TimeDigitView(value: viewModel.remainingTime % 60)
+                            TimeDigitView(value: max(0, viewModel.remainingTime % 60))
                         }
                         
                         HStack {
@@ -522,8 +541,16 @@ struct TimerView: View {
                             
                             Spacer()
                             
-                            Text("圈内倒计时: \(viewModel.currentLapRemainingSeconds)")
-                                .font(.headline)
+                            if viewModel.isCountingUp {
+                                // 显示正向计时
+                                Text("超时: +\(viewModel.countUpSeconds)秒")
+                                    .font(.headline)
+                                    .foregroundColor(.red)
+                            } else {
+                                // 显示倒计时
+                                Text("圈内倒计时: \(viewModel.currentLapRemainingSeconds)")
+                                    .font(.headline)
+                            }
                         }
                         
                         // 额外时间状态指示
@@ -542,19 +569,24 @@ struct TimerView: View {
                     )
                     
                     // 完成当前圈按钮 - 固定在这个位置
-                    if viewModel.isRunning && !viewModel.isInExtraTime {
+                    if viewModel.isRunning && !viewModel.isInExtraTime && !viewModel.isTimerCompleted {
                         Button(action: {
                             viewModel.saveCurrentLapRemainingTime()
                         }) {
                             HStack {
                                 Image(systemName: "flag.checkered")
-                                Text("完成本圈")
-                                    .fontWeight(.semibold)
+                                if viewModel.isCountingUp {
+                                    Text("完成本圈 (已超时)")
+                                        .fontWeight(.semibold)
+                                } else {
+                                    Text("完成本圈")
+                                        .fontWeight(.semibold)
+                                }
                             }
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
-                            .background(Color.blue)
+                            .background(viewModel.isCountingUp ? Color.red : Color.blue)
                             .cornerRadius(10)
                         }
                         .padding(.horizontal)
@@ -592,14 +624,22 @@ struct TimerView: View {
                     .padding(.bottom, 10)
                     
                     // 已储存时间和每圈节省时间放在最下方
-                    if viewModel.savedExtraTime > 0 {
+                    if viewModel.savedExtraTime != 0 || !viewModel.lapSavedTimes.isEmpty {
                         VStack(spacing: 8) {
                             HStack {
-                                Image(systemName: "clock.badge.checkmark")
-                                    .foregroundColor(.green)
-                                Text("已储存: \(viewModel.savedExtraTime)秒")
-                                    .foregroundColor(.green)
-                                    .fontWeight(.semibold)
+                                if viewModel.savedExtraTime >= 0 {
+                                    Image(systemName: "clock.badge.checkmark")
+                                        .foregroundColor(.green)
+                                    Text("已储存: \(viewModel.savedExtraTime)秒")
+                                        .foregroundColor(.green)
+                                        .fontWeight(.semibold)
+                                } else {
+                                    Image(systemName: "clock.badge.exclamationmark")
+                                        .foregroundColor(.red)
+                                    Text("已超时: \(abs(viewModel.savedExtraTime))秒")
+                                        .foregroundColor(.red)
+                                        .fontWeight(.semibold)
+                                }
                                 
                                 Spacer()
                                 
@@ -616,11 +656,19 @@ struct TimerView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     ForEach(0..<viewModel.lapSavedTimes.count, id: \.self) { index in
                                         HStack {
-                                            Image(systemName: "flag.checkered")
-                                                .foregroundColor(.green)
-                                            Text("第\(index + 1)圈节省: \(viewModel.lapSavedTimes[index])秒")
-                                                .foregroundColor(.green)
-                                                .fontWeight(.semibold)
+                                            if viewModel.lapSavedTimes[index] >= 0 {
+                                                Image(systemName: "flag.checkered")
+                                                    .foregroundColor(.green)
+                                                Text("第\(index + 1)圈节省: \(viewModel.lapSavedTimes[index])秒")
+                                                    .foregroundColor(.green)
+                                                    .fontWeight(.semibold)
+                                            } else {
+                                                Image(systemName: "flag.checkered")
+                                                    .foregroundColor(.red)
+                                                Text("第\(index + 1)圈超时: \(abs(viewModel.lapSavedTimes[index]))秒")
+                                                    .foregroundColor(.red)
+                                                    .fontWeight(.semibold)
+                                            }
                                             
                                             Spacer()
                                         }
