@@ -11,18 +11,28 @@ import AVFoundation
 class TimerViewModel: ObservableObject {
     @Published var totalMinutes: Int = 4
     @Published var totalSeconds: Int = 25
-    @Published var totalDistance: Int = 1000  // 新增总距离，默认1000米
-    @Published var lapDistance: Int = 200
+    @Published var totalDistance: Int = 1000 {
+        didSet {
+            validateCurrentLap()
+        }
+    }
+    @Published var lapDistance: Int = 200 {
+        didSet {
+            validateCurrentLap()
+        }
+    }
     @Published var lapTime: Int = 53
     
     @Published var isRunning: Bool = false
     @Published var remainingTime: Int = 0
     @Published var currentLapRemainingSeconds: Int = 0  // 修改为当前圈剩余秒数
-    @Published var currentLap: Int = 1
+    @Published var currentLap: Int = 0  // 修改初始圈数为0
+    @Published var isTimerCompleted: Bool = false  // 添加标记表示计时已完成
     
     // 新增提前完成时间相关的属性
     @Published var savedExtraTime: Int = 0  // 已保存的提前完成时间（秒）
     @Published var isInExtraTime: Bool = false  // 是否在额外时间中
+    @Published var lapSavedTimes: [Int] = []  // 存储每圈节省的时间
     
     private var timer: Timer?
     private let speechSynthesizer = AVSpeechSynthesizer()
@@ -153,10 +163,13 @@ class TimerViewModel: ObservableObject {
         
         // 计算每圈时间 = 总时间 / 总圈数
         lapTime = Int(Double(totalTimeInSeconds) / totalLaps)
+        
+        // 验证当前圈数
+        validateCurrentLap()
     }
     
     func startTimer() {
-        if !isRunning {
+        if !isRunning && !isTimerCompleted {  // 添加对计时完成状态的检查
             isRunning = true
             remainingTime = totalMinutes * 60 + totalSeconds
             currentLapRemainingSeconds = lapTime  // 初始化为每圈总时间，从每圈时间开始倒数
@@ -187,7 +200,15 @@ class TimerViewModel: ObservableObject {
                             self.enterExtraTimeMode()
                         } else {
                             self.currentLapRemainingSeconds = self.lapTime
-                            self.currentLap += 1
+                            // 只有当当前圈数小于总圈数-1时才增加圈数
+                            if self.currentLap < self.totalLaps() - 1 {
+                                self.currentLap += 1
+                            } else {
+                                // 如果已经是最后一圈，则结束计时
+                                self.pauseTimer()
+                                self.isTimerCompleted = true
+                                self.speakMessage("计时完成")
+                            }
                         }
                     }
                 } else {
@@ -196,6 +217,7 @@ class TimerViewModel: ObservableObject {
                         self.enterExtraTimeMode()
                     } else {
                         self.pauseTimer()
+                        self.isTimerCompleted = true  // 标记计时已完成
                         // 播报完成提示
                         if self.savedExtraTime > 0 && self.isInExtraTime {
                             self.speakMessage("计时完成，您使用了\(self.savedExtraTime)秒额外时间")
@@ -214,7 +236,7 @@ class TimerViewModel: ObservableObject {
     // 检查是否应该进入额外时间模式
     private func shouldEnterExtraTime() -> Bool {
         // 当前圈是最后一圈，且有额外时间可用
-        return !isInExtraTime && currentLap == totalLaps() && savedExtraTime > 0
+        return !isInExtraTime && currentLap == (totalLaps() - 1) && savedExtraTime > 0
     }
     
     // 进入额外时间模式
@@ -227,22 +249,32 @@ class TimerViewModel: ObservableObject {
     // 计算总圈数
     func totalLaps() -> Int {
         guard lapDistance > 0 else { return 0 }
-        return Int(ceil(Double(totalDistance) / Double(lapDistance)))
+        // 总圈数至少为1
+        return max(1, Int(ceil(Double(totalDistance) / Double(lapDistance))))
     }
     
     // 添加保存当前圈剩余时间的方法
     func saveCurrentLapRemainingTime() {
         if currentLapRemainingSeconds > 0 && isRunning {
+            // 记录当前圈节省的时间
+            let savedTime = currentLapRemainingSeconds
+            
             // 累加保存剩余时间
-            savedExtraTime += currentLapRemainingSeconds
+            savedExtraTime += savedTime
+            
+            // 添加到每圈节省时间数组
+            lapSavedTimes.append(savedTime)
             
             // 开始下一圈
             currentLapRemainingSeconds = lapTime
-            currentLap += 1
             
-            // 如果是最后一圈并完成，进入额外时间模式或结束计时
-            if currentLap > totalLaps() {
+            // 只有当当前圈数小于总圈数-1时才增加圈数
+            if currentLap < totalLaps() - 1 {
+                currentLap += 1
+            } else {
+                // 如果已经是最后一圈，则结束计时
                 pauseTimer()
+                isTimerCompleted = true
                 // 播报总节省时间
                 if savedExtraTime > 0 {
                     speakMessage("计时完成，总共节省\(savedExtraTime)秒")
@@ -256,6 +288,7 @@ class TimerViewModel: ObservableObject {
     // 清空保存的额外时间
     func resetSavedExtraTime() {
         savedExtraTime = 0
+        lapSavedTimes.removeAll()  // 清空每圈节省时间数组
         isInExtraTime = false
     }
     
@@ -272,9 +305,12 @@ class TimerViewModel: ObservableObject {
         pauseTimer()
         remainingTime = totalMinutes * 60 + totalSeconds
         currentLapRemainingSeconds = lapTime  // 重置为每圈总时间
-        currentLap = 1
+        currentLap = 0  // 重置为0圈
         // 重置额外时间相关状态
         isInExtraTime = false
+        savedExtraTime = 0  // 确保清空保存的额外时间
+        lapSavedTimes.removeAll()  // 清空每圈节省时间数组
+        isTimerCompleted = false  // 重置计时完成状态
     }
     
     func speakCurrentSecond() {
@@ -332,6 +368,21 @@ class TimerViewModel: ObservableObject {
         // 获取语速
         utterance.rate = settingsManager.getSpeechRate()
         utterance.volume = 1.0
+    }
+    
+    // 验证当前圈数是否有效
+    private func validateCurrentLap() {
+        // 如果不在运行状态，确保当前圈数不超过总圈数-1
+        if !isRunning {
+            let maxLaps = totalLaps() - 1
+            if currentLap > maxLaps && maxLaps >= 0 {
+                currentLap = maxLaps
+            }
+            // 确保圈数不小于0
+            if currentLap < 0 {
+                currentLap = 0
+            }
+        }
     }
 }
 
@@ -466,34 +517,13 @@ struct TimerView: View {
                         }
                         
                         HStack {
-                            Text("当前圈数: \(viewModel.currentLap)/\(viewModel.totalLaps())")
+                            Text("当前圈数: \(viewModel.currentLap + 1)/\(viewModel.totalLaps())")
                                 .font(.headline)
                             
                             Spacer()
                             
                             Text("圈内倒计时: \(viewModel.currentLapRemainingSeconds)")
                                 .font(.headline)
-                        }
-                        
-                        // 显示已保存时间
-                        if viewModel.savedExtraTime > 0 {
-                            HStack {
-                                Image(systemName: "clock.badge.checkmark")
-                                    .foregroundColor(.green)
-                                Text("已储存: \(viewModel.savedExtraTime)秒")
-                                    .foregroundColor(.green)
-                                    .fontWeight(.semibold)
-                                
-                                Spacer()
-                                
-                                Button(action: {
-                                    viewModel.resetSavedExtraTime()
-                                }) {
-                                    Image(systemName: "xmark.circle")
-                                        .foregroundColor(.red)
-                                }
-                            }
-                            .padding(.top, 4)
                         }
                         
                         // 额外时间状态指示
@@ -511,7 +541,7 @@ struct TimerView: View {
                             .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                     )
                     
-                    // 完成当前圈按钮
+                    // 完成当前圈按钮 - 固定在这个位置
                     if viewModel.isRunning && !viewModel.isInExtraTime {
                         Button(action: {
                             viewModel.saveCurrentLapRemainingTime()
@@ -543,9 +573,10 @@ struct TimerView: View {
                                 .font(.system(size: 24))
                                 .foregroundColor(.white)
                                 .frame(width: 60, height: 60)
-                                .background(viewModel.isRunning ? Color.orange : Color.green)
+                                .background(viewModel.isRunning ? Color.orange : (viewModel.isTimerCompleted ? Color.gray : Color.green))
                                 .clipShape(Circle())
                         }
+                        .disabled(viewModel.isTimerCompleted) // 计时完成时禁用开始按钮
                         
                         Button(action: {
                             viewModel.resetTimer()
@@ -558,7 +589,52 @@ struct TimerView: View {
                                 .clipShape(Circle())
                         }
                     }
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 10)
+                    
+                    // 已储存时间和每圈节省时间放在最下方
+                    if viewModel.savedExtraTime > 0 {
+                        VStack(spacing: 8) {
+                            HStack {
+                                Image(systemName: "clock.badge.checkmark")
+                                    .foregroundColor(.green)
+                                Text("已储存: \(viewModel.savedExtraTime)秒")
+                                    .foregroundColor(.green)
+                                    .fontWeight(.semibold)
+                                
+                                Spacer()
+                                
+                                Button(action: {
+                                    viewModel.resetSavedExtraTime()
+                                }) {
+                                    Image(systemName: "xmark.circle")
+                                        .foregroundColor(.red)
+                                }
+                            }
+                            
+                            // 显示每圈节省的时间
+                            if !viewModel.lapSavedTimes.isEmpty {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    ForEach(0..<viewModel.lapSavedTimes.count, id: \.self) { index in
+                                        HStack {
+                                            Image(systemName: "flag.checkered")
+                                                .foregroundColor(.green)
+                                            Text("第\(index + 1)圈节省: \(viewModel.lapSavedTimes[index])秒")
+                                                .foregroundColor(.green)
+                                                .fontWeight(.semibold)
+                                            
+                                            Spacer()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(.systemBackground))
+                                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                        )
+                    }
                 }
                 .padding()
             }
