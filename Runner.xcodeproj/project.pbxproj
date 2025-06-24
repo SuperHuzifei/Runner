@@ -3,10 +3,11 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		740B4B5F2E0A947500CCAB9E /* RunnerWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 740B4B3F2E0A946E00CCAB9E /* RunnerWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		7442B8CD2DED83190051EDC0 /* RunnerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7442B8CC2DED83190051EDC0 /* RunnerApp.swift */; };
 		7442B8CF2DED83190051EDC0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7442B8CE2DED83190051EDC0 /* ContentView.swift */; };
 		7442B8D12DED831B0051EDC0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7442B8D02DED831B0051EDC0 /* Assets.xcassets */; };
@@ -23,6 +24,27 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		740B4B4C2E0A947400CCAB9E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7442B8C12DED83190051EDC0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 740B4B3E2E0A946E00CCAB9E;
+			remoteInfo = "RunnerWatch Watch App";
+		};
+		740B4B562E0A947500CCAB9E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7442B8C12DED83190051EDC0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 740B4B3E2E0A946E00CCAB9E;
+			remoteInfo = "RunnerWatch Watch App";
+		};
+		740B4B5D2E0A947500CCAB9E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7442B8C12DED83190051EDC0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 740B4B3E2E0A946E00CCAB9E;
+			remoteInfo = "RunnerWatch Watch App";
+		};
 		7442B8DA2DED831C0051EDC0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 7442B8C12DED83190051EDC0 /* Project object */;
@@ -39,7 +61,24 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		740B4B632E0A947500CCAB9E /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				740B4B5F2E0A947500CCAB9E /* RunnerWatch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		740B4B3F2E0A946E00CCAB9E /* RunnerWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "RunnerWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		740B4B4B2E0A947400CCAB9E /* RunnerWatch Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "RunnerWatch Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		740B4B552E0A947400CCAB9E /* RunnerWatch Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "RunnerWatch Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		7442B8C92DED83190051EDC0 /* Runner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Runner.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7442B8CC2DED83190051EDC0 /* RunnerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerApp.swift; sourceTree = "<group>"; };
 		7442B8CE2DED83190051EDC0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -58,7 +97,34 @@
 		74E247F72DEE0CFC00A3CC6E /* SettingsManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		740B4B402E0A946E00CCAB9E /* RunnerWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "RunnerWatch Watch App"; sourceTree = "<group>"; };
+		740B4B4E2E0A947400CCAB9E /* RunnerWatch Watch AppTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "RunnerWatch Watch AppTests"; sourceTree = "<group>"; };
+		740B4B582E0A947500CCAB9E /* RunnerWatch Watch AppUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "RunnerWatch Watch AppUITests"; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
+		740B4B3C2E0A946E00CCAB9E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		740B4B482E0A947400CCAB9E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		740B4B522E0A947400CCAB9E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		7442B8C62DED83190051EDC0 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -89,6 +155,9 @@
 				7442B8CB2DED83190051EDC0 /* Runner */,
 				7442B8DC2DED831C0051EDC0 /* RunnerTests */,
 				7442B8E62DED831C0051EDC0 /* RunnerUITests */,
+				740B4B402E0A946E00CCAB9E /* RunnerWatch Watch App */,
+				740B4B4E2E0A947400CCAB9E /* RunnerWatch Watch AppTests */,
+				740B4B582E0A947500CCAB9E /* RunnerWatch Watch AppUITests */,
 				7442B8CA2DED83190051EDC0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -99,6 +168,9 @@
 				7442B8C92DED83190051EDC0 /* Runner.app */,
 				7442B8D92DED831C0051EDC0 /* RunnerTests.xctest */,
 				7442B8E32DED831C0051EDC0 /* RunnerUITests.xctest */,
+				740B4B3F2E0A946E00CCAB9E /* RunnerWatch Watch App.app */,
+				740B4B4B2E0A947400CCAB9E /* RunnerWatch Watch AppTests.xctest */,
+				740B4B552E0A947400CCAB9E /* RunnerWatch Watch AppUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -148,6 +220,74 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		740B4B3E2E0A946E00CCAB9E /* RunnerWatch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 740B4B602E0A947500CCAB9E /* Build configuration list for PBXNativeTarget "RunnerWatch Watch App" */;
+			buildPhases = (
+				740B4B3B2E0A946E00CCAB9E /* Sources */,
+				740B4B3C2E0A946E00CCAB9E /* Frameworks */,
+				740B4B3D2E0A946E00CCAB9E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				740B4B402E0A946E00CCAB9E /* RunnerWatch Watch App */,
+			);
+			name = "RunnerWatch Watch App";
+			packageProductDependencies = (
+			);
+			productName = "RunnerWatch Watch App";
+			productReference = 740B4B3F2E0A946E00CCAB9E /* RunnerWatch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		740B4B4A2E0A947400CCAB9E /* RunnerWatch Watch AppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 740B4B642E0A947500CCAB9E /* Build configuration list for PBXNativeTarget "RunnerWatch Watch AppTests" */;
+			buildPhases = (
+				740B4B472E0A947400CCAB9E /* Sources */,
+				740B4B482E0A947400CCAB9E /* Frameworks */,
+				740B4B492E0A947400CCAB9E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				740B4B4D2E0A947400CCAB9E /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				740B4B4E2E0A947400CCAB9E /* RunnerWatch Watch AppTests */,
+			);
+			name = "RunnerWatch Watch AppTests";
+			packageProductDependencies = (
+			);
+			productName = "RunnerWatch Watch AppTests";
+			productReference = 740B4B4B2E0A947400CCAB9E /* RunnerWatch Watch AppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		740B4B542E0A947400CCAB9E /* RunnerWatch Watch AppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 740B4B672E0A947500CCAB9E /* Build configuration list for PBXNativeTarget "RunnerWatch Watch AppUITests" */;
+			buildPhases = (
+				740B4B512E0A947400CCAB9E /* Sources */,
+				740B4B522E0A947400CCAB9E /* Frameworks */,
+				740B4B532E0A947400CCAB9E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				740B4B572E0A947500CCAB9E /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				740B4B582E0A947500CCAB9E /* RunnerWatch Watch AppUITests */,
+			);
+			name = "RunnerWatch Watch AppUITests";
+			packageProductDependencies = (
+			);
+			productName = "RunnerWatch Watch AppUITests";
+			productReference = 740B4B552E0A947400CCAB9E /* RunnerWatch Watch AppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		7442B8C82DED83190051EDC0 /* Runner */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7442B8ED2DED831C0051EDC0 /* Build configuration list for PBXNativeTarget "Runner" */;
@@ -155,10 +295,12 @@
 				7442B8C52DED83190051EDC0 /* Sources */,
 				7442B8C62DED83190051EDC0 /* Frameworks */,
 				7442B8C72DED83190051EDC0 /* Resources */,
+				740B4B632E0A947500CCAB9E /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				740B4B5E2E0A947500CCAB9E /* PBXTargetDependency */,
 			);
 			name = Runner;
 			productName = Runner;
@@ -208,9 +350,20 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1420;
-				LastUpgradeCheck = 1420;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
 				TargetAttributes = {
+					740B4B3E2E0A946E00CCAB9E = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					740B4B4A2E0A947400CCAB9E = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 740B4B3E2E0A946E00CCAB9E;
+					};
+					740B4B542E0A947400CCAB9E = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 740B4B3E2E0A946E00CCAB9E;
+					};
 					7442B8C82DED83190051EDC0 = {
 						CreatedOnToolsVersion = 14.2;
 					};
@@ -240,11 +393,35 @@
 				7442B8C82DED83190051EDC0 /* Runner */,
 				7442B8D82DED831C0051EDC0 /* RunnerTests */,
 				7442B8E22DED831C0051EDC0 /* RunnerUITests */,
+				740B4B3E2E0A946E00CCAB9E /* RunnerWatch Watch App */,
+				740B4B4A2E0A947400CCAB9E /* RunnerWatch Watch AppTests */,
+				740B4B542E0A947400CCAB9E /* RunnerWatch Watch AppUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		740B4B3D2E0A946E00CCAB9E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		740B4B492E0A947400CCAB9E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		740B4B532E0A947400CCAB9E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		7442B8C72DED83190051EDC0 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -271,6 +448,27 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		740B4B3B2E0A946E00CCAB9E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		740B4B472E0A947400CCAB9E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		740B4B512E0A947400CCAB9E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		7442B8C52DED83190051EDC0 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -306,6 +504,21 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		740B4B4D2E0A947400CCAB9E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 740B4B3E2E0A946E00CCAB9E /* RunnerWatch Watch App */;
+			targetProxy = 740B4B4C2E0A947400CCAB9E /* PBXContainerItemProxy */;
+		};
+		740B4B572E0A947500CCAB9E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 740B4B3E2E0A946E00CCAB9E /* RunnerWatch Watch App */;
+			targetProxy = 740B4B562E0A947500CCAB9E /* PBXContainerItemProxy */;
+		};
+		740B4B5E2E0A947500CCAB9E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 740B4B3E2E0A946E00CCAB9E /* RunnerWatch Watch App */;
+			targetProxy = 740B4B5D2E0A947500CCAB9E /* PBXContainerItemProxy */;
+		};
 		7442B8DB2DED831C0051EDC0 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 7442B8C82DED83190051EDC0 /* Runner */;
@@ -319,6 +532,163 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		740B4B612E0A947500CCAB9E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = RunnerWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = cn.findclub.Runner;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cn.findclub.Runner.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9.6;
+			};
+			name = Debug;
+		};
+		740B4B622E0A947500CCAB9E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = RunnerWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = cn.findclub.Runner;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cn.findclub.Runner.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9.6;
+			};
+			name = Release;
+		};
+		740B4B652E0A947500CCAB9E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = S542WTQWR3;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "cn.findclub.RunnerWatch-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RunnerWatch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RunnerWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 9.6;
+			};
+			name = Debug;
+		};
+		740B4B662E0A947500CCAB9E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = S542WTQWR3;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "cn.findclub.RunnerWatch-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RunnerWatch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RunnerWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 9.6;
+			};
+			name = Release;
+		};
+		740B4B682E0A947500CCAB9E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = S542WTQWR3;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "cn.findclub.RunnerWatch-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "RunnerWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 9.6;
+			};
+			name = Debug;
+		};
+		740B4B692E0A947500CCAB9E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = S542WTQWR3;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "cn.findclub.RunnerWatch-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "RunnerWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 9.6;
+			};
+			name = Release;
+		};
 		7442B8EB2DED831C0051EDC0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -353,8 +723,10 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = S542WTQWR3;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -413,8 +785,10 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = S542WTQWR3;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -441,7 +815,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Runner/Preview Content\"";
-				DEVELOPMENT_TEAM = S542WTQWR3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
@@ -450,7 +823,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -472,7 +845,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Runner/Preview Content\"";
-				DEVELOPMENT_TEAM = S542WTQWR3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
@@ -481,7 +853,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -498,14 +870,12 @@
 		7442B8F12DED831C0051EDC0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = S542WTQWR3;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = cn.findclub.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -519,14 +889,12 @@
 		7442B8F22DED831C0051EDC0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = S542WTQWR3;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = cn.findclub.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -540,12 +908,11 @@
 		7442B8F42DED831C0051EDC0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = S542WTQWR3;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = cn.findclub.RunnerUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -559,12 +926,11 @@
 		7442B8F52DED831C0051EDC0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = S542WTQWR3;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = cn.findclub.RunnerUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -578,6 +944,33 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		740B4B602E0A947500CCAB9E /* Build configuration list for PBXNativeTarget "RunnerWatch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				740B4B612E0A947500CCAB9E /* Debug */,
+				740B4B622E0A947500CCAB9E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		740B4B642E0A947500CCAB9E /* Build configuration list for PBXNativeTarget "RunnerWatch Watch AppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				740B4B652E0A947500CCAB9E /* Debug */,
+				740B4B662E0A947500CCAB9E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		740B4B672E0A947500CCAB9E /* Build configuration list for PBXNativeTarget "RunnerWatch Watch AppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				740B4B682E0A947500CCAB9E /* Debug */,
+				740B4B692E0A947500CCAB9E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		7442B8C42DED83190051EDC0 /* Build configuration list for PBXProject "Runner" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

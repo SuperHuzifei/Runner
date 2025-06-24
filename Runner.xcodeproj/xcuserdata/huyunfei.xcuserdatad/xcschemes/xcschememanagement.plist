@@ -7,7 +7,45 @@
 		<key>Runner.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>0</integer>
+			<integer>1</integer>
+		</dict>
+		<key>RunnerWatch Watch App.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>740B4B3E2E0A946E00CCAB9E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>740B4B4A2E0A947400CCAB9E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>740B4B542E0A947400CCAB9E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>7442B8C82DED83190051EDC0</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>7442B8D82DED831C0051EDC0</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>7442B8E22DED831C0051EDC0</key>
+		<dict>
+			<key>primary</key>
+			<true/>
 		</dict>
 	</dict>
 </dict>
