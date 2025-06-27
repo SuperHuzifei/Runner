@@ -533,23 +533,27 @@ struct TimerView: View {
                             Button(action: {
                                 viewModel.saveCurrentLapRemainingTime()
                             }) {
-                                HStack {
+                                VStack {
                                     Image(systemName: "flag.checkered")
+                                        .font(.system(size: 36))
                                     if viewModel.isCountingUp {
-                                        Text("完成本圈 (已超时)")
+                                        Text("完成本圈")
                                             .fontWeight(.semibold)
+                                            .font(.system(size: 18))
                                     } else {
                                         Text("完成本圈")
                                             .fontWeight(.semibold)
+                                            .font(.system(size: 18))
                                     }
                                 }
                                 .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
+                                .frame(width: 160, height: 160)
                                 .background(viewModel.isCountingUp ? Color.red : Color.blue)
-                                .cornerRadius(10)
+                                .clipShape(Circle())
+                                .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
                             }
-                            .padding(.horizontal)
+                            .padding(.vertical, 20)
+                            .frame(maxWidth: .infinity, alignment: .center)
                         }
                         
                         // 控制按钮

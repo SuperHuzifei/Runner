@@ -14,9 +14,13 @@ struct RunnerWatch_Watch_AppApp: App {
     // 添加应用生命周期管理
     @WKApplicationDelegateAdaptor private var appDelegate: AppDelegate
     
+    // 创建共享的TimerViewModel实例
+    @StateObject private var timerViewModel = TimerViewModel()
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(timerViewModel)
         }
     }
 }

@@ -33,6 +33,13 @@ class TimerViewModel: ObservableObject {
     }
     @Published var lapTime: Int = 53
     
+    // 新增自动跳圈设置
+    @Published var isAutoLapEnabled: Bool = false {
+        didSet {
+            UserDefaults.standard.set(isAutoLapEnabled, forKey: "isAutoLapEnabled")
+        }
+    }
+    
     @Published var isRunning: Bool = false
     @Published var remainingTime: Int = 0
     @Published var currentLapRemainingSeconds: Int = 0
@@ -77,6 +84,9 @@ class TimerViewModel: ObservableObject {
         if let savedLapDistance = UserDefaults.standard.object(forKey: "lapDistance") as? Int {
             lapDistance = savedLapDistance
         }
+        
+        // 加载自动跳圈设置
+        isAutoLapEnabled = UserDefaults.standard.bool(forKey: "isAutoLapEnabled")
     }
     
     func calculateLapTime() {
@@ -139,6 +149,11 @@ class TimerViewModel: ObservableObject {
                 if self.isCountingUp {
                     // 如果已经在正向计时，增加正向计时秒数
                     self.countUpSeconds += 1
+                    
+                    // 如果开启了自动跳圈，超时3秒后自动跳转到下一圈
+                    if self.isAutoLapEnabled && self.countUpSeconds >= 3 {
+                        self.saveCurrentLapRemainingTime()
+                    }
                 } else {
                     // 正常倒计时
                     self.currentLapRemainingSeconds -= 1
@@ -147,6 +162,10 @@ class TimerViewModel: ObservableObject {
                         if self.shouldEnterExtraTime() {
                             // 进入额外时间模式
                             self.enterExtraTimeMode()
+                        } else if self.isAutoLapEnabled {
+                            // 如果启用了自动跳圈，则自动进入下一圈
+                            self.saveCurrentLapRemainingTime()
+                            self.speakMessage("自动进入下一圈")
                         } else {
                             // 开始正向计时，而不是自动跳到下一圈
                             self.isCountingUp = true

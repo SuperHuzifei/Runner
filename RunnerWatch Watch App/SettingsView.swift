@@ -15,7 +15,8 @@ struct WatchTextFieldStyle: TextFieldStyle {
 }
 
 struct SettingsView: View {
-    @StateObject private var viewModel = TimerViewModel()
+    // 使用环境对象替代自己创建的ViewModel
+    @EnvironmentObject private var viewModel: TimerViewModel
     @Environment(\.presentationMode) var presentationMode
     @State private var speechRate: Float = 0.5
     @State private var totalDistanceText: String = "1000"
@@ -37,6 +38,10 @@ struct SettingsView: View {
                             }
                         }
                         .labelsHidden()
+                        .onChange(of: viewModel.totalMinutes) { newValue in
+                            // 实时保存分钟设置
+                            UserDefaults.standard.set(newValue, forKey: "totalMinutes")
+                        }
                         
                         Text("分")
                             .font(.caption2)
@@ -47,6 +52,10 @@ struct SettingsView: View {
                             }
                         }
                         .labelsHidden()
+                        .onChange(of: viewModel.totalSeconds) { newValue in
+                            // 实时保存秒钟设置
+                            UserDefaults.standard.set(newValue, forKey: "totalSeconds")
+                        }
                         
                         Text("秒")
                             .font(.caption2)
@@ -70,6 +79,8 @@ struct SettingsView: View {
                             .onChange(of: totalDistanceText) { newValue in
                                 if let intValue = Int(newValue) {
                                     viewModel.totalDistance = intValue
+                                    // 实时保存总距离
+                                    UserDefaults.standard.set(intValue, forKey: "totalDistance")
                                 }
                             }
                         
@@ -91,12 +102,33 @@ struct SettingsView: View {
                             .onChange(of: lapDistanceText) { newValue in
                                 if let intValue = Int(newValue) {
                                     viewModel.lapDistance = intValue
+                                    // 实时保存每圈距离
+                                    UserDefaults.standard.set(intValue, forKey: "lapDistance")
                                 }
                             }
                         
                         Text("米")
                             .font(.caption2)
                     }
+                }
+                
+                Divider()
+                
+                // 自动跳圈设置
+                Group {
+                    Text("圈数设置")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    Toggle("自动跳圈", isOn: $viewModel.isAutoLapEnabled)
+                        .onChange(of: viewModel.isAutoLapEnabled) { newValue in
+                            UserDefaults.standard.set(newValue, forKey: "isAutoLapEnabled")
+                        }
+                    
+                    Text("开启后每圈结束时将自动进入下一圈")
+                        .font(.caption2)
+                        .foregroundColor(.gray)
+                        .padding(.bottom, 5)
                 }
                 
                 Divider()
@@ -126,9 +158,8 @@ struct SettingsView: View {
                 
                 Divider()
                 
-                // 保存按钮
-                Button("保存设置") {
-                    saveSettings()
+                // 返回按钮
+                Button("返回") {
                     presentationMode.wrappedValue.dismiss()
                 }
                 .buttonStyle(.borderedProminent)
@@ -150,23 +181,6 @@ struct SettingsView: View {
         }
     }
     
-    private func saveSettings() {
-        // 保存设置到UserDefaults
-        UserDefaults.standard.set(viewModel.totalMinutes, forKey: "totalMinutes")
-        UserDefaults.standard.set(viewModel.totalSeconds, forKey: "totalSeconds")
-        
-        // 确保文本值正确转换为整数
-        if let totalDist = Int(totalDistanceText) {
-            UserDefaults.standard.set(totalDist, forKey: "totalDistance")
-        }
-        
-        if let lapDist = Int(lapDistanceText) {
-            UserDefaults.standard.set(lapDist, forKey: "lapDistance")
-        }
-        
-        UserDefaults.standard.set(speechRate, forKey: "speechRate")
-    }
-    
     private func testVoice() {
         let utterance = AVSpeechUtterance(string: "这是一个语音测试")
         
@@ -183,5 +197,6 @@ struct SettingsView: View {
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
         SettingsView()
+            .environmentObject(TimerViewModel())
     }
 } 
